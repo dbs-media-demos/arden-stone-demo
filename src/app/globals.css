@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Arden & Stone — ivory, ink and bronze palette */
+    --background: 40 27% 96%;
+    --foreground: 26 14% 10%;
+
+    --ink: 26 14% 10%;
+    --ink-soft: 26 10% 16%;
+    --ivory: 40 27% 96%;
+    --stone: 36 14% 88%;
+    --bronze: 30 42% 42%;
+    --bronze-light: 32 45% 58%;
+
+    --border: 36 12% 85%;
+    --muted: 38 16% 92%;
+    --muted-foreground: 28 8% 42%;
+  }
+}
+
+/* Lenis smooth-scroll (native scroll-behavior must stay off while it runs) */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Editorial oversized headline sizing */
+  .headline-xl {
+    font-size: clamp(2.75rem, 7.5vw, 6.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+  }
+
+  .headline-lg {
+    font-size: clamp(2.25rem, 5vw, 4.25rem);
+    line-height: 1.06;
+    letter-spacing: -0.015em;
+  }
+
+  .headline-md {
+    font-size: clamp(1.75rem, 3.4vw, 2.75rem);
+    line-height: 1.12;
+  }
+
+  .eyebrow {
+    @apply font-body text-[11px] font-medium uppercase tracking-[0.35em] text-bronze;
+  }
+}
+
+/* Subtle film-grain overlay for depth */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 80;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 9s steps(10) infinite;
+}
+
+@keyframes grain-shift {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-3%, -5%); }
+  30% { transform: translate(4%, 2%); }
+  50% { transform: translate(-4%, 6%); }
+  70% { transform: translate(5%, -3%); }
+  90% { transform: translate(-2%, 4%); }
+}
+
+/* Custom cursor is rendered by <CustomCursor/>; hide it on touch devices */
+@media (pointer: coarse) {
+  .cursor-dot,
+  .cursor-ring {
+    display: none;
+  }
+}
+
+/* Fine-pointer devices use only the custom cursor */
+@media (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--stone));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--bronze) / 0.6);
+}
+
+::selection {
+  background: hsl(var(--bronze) / 0.25);
+  color: hsl(var(--foreground));
+}
+
+/* Underline sweep for nav / inline links */
+.link-sweep {
+  position: relative;
+}
+.link-sweep::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.45s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.link-sweep:hover::after,
+.link-sweep.is-active::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
