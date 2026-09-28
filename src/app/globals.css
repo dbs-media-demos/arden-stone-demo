@@ -303,11 +303,9 @@
   }
   /* The drawing lens: a hole in the photo that follows the pointer. */
   .lens {
-    --lx: 50%;
-    --ly: 50%;
-    --lr: 0px;
-    -webkit-mask-image: radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 97%, #000 100%);
-    mask-image: radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 97%, #000 100%);
+    /* --lx/--ly/--lr are set on the parent frame by the pointer handler and inherited here. */
+    -webkit-mask-image: radial-gradient(circle var(--lr, 0px) at var(--lx, 50%) var(--ly, 50%), transparent 97%, #000 100%);
+    mask-image: radial-gradient(circle var(--lr, 0px) at var(--lx, 50%) var(--ly, 50%), transparent 97%, #000 100%);
   }
   @keyframes bar-fill {
     from {
