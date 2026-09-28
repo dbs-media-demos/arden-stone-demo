@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import clsx from "clsx";
 import { estimate, EXTRAS, FINISHES, ROOMS } from "@/data/estimator";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
 import { Arrow } from "@/components/ui/Button";

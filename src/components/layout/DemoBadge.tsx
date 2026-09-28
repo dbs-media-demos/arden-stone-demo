@@ -1,21 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { site } from "@/lib/site";
 
 const KEY = "as-demo-badge-dismissed";
+const EVENT = "as-demo-badge";
 
-/** Small fixed pill marking this as a DBS Media concept site. */
+const read = () => {
+  try {
+    return sessionStorage.getItem(KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const subscribe = (cb: () => void) => {
+  window.addEventListener(EVENT, cb);
+  return () => window.removeEventListener(EVENT, cb);
+};
+
+/** Small fixed pill marking this as a DBS Media concept site. Dismissal lasts for the browser session. */
 export function DemoBadge() {
-  const [shown, setShown] = useState(true);
-
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem(KEY)) setShown(false);
-    } catch {}
-  }, []);
-
-  if (!shown) return null;
+  const dismissed = useSyncExternalStore(subscribe, read, () => false);
+  if (dismissed) return null;
 
   return (
     <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-3 z-[60] flex items-center overflow-hidden rounded-full border border-ivory/15 bg-ink/90 text-ivory shadow-lg backdrop-blur md:right-4 md:bottom-4 md:left-auto">
@@ -27,10 +33,10 @@ export function DemoBadge() {
         type="button"
         aria-label="Dismiss concept site notice"
         onClick={() => {
-          setShown(false);
           try {
             sessionStorage.setItem(KEY, "1");
           } catch {}
+          window.dispatchEvent(new Event(EVENT));
         }}
         className="flex h-9 w-9 items-center justify-center border-l border-ivory/15 text-ivory/70 hover:text-ivory"
       >
