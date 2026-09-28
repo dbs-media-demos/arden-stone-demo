@@ -148,7 +148,7 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
       {/* Frame: mobile = block below the copy; desktop = full-bleed layer clipped to the right column. */}
       <div
         ref={frame}
-        className="lens-host relative mx-[var(--gutter)] mt-10 h-[64svh] min-h-[420px] overflow-hidden bg-paper lg:absolute lg:inset-0 lg:m-0 lg:h-auto lg:[clip-path:inset(calc(var(--header-h)+0.75rem)_var(--gutter)_88px_44%)]"
+        className="lens-host relative mx-[var(--gutter)] mt-7 h-[64svh] md:mt-10 min-h-[420px] overflow-hidden bg-paper lg:absolute lg:inset-0 lg:m-0 lg:h-auto lg:[clip-path:inset(calc(var(--header-h)+0.75rem)_var(--gutter)_88px_44%)]"
       >
         {slides.map((s, i) => {
           if (i > 0 && !extra) return null;

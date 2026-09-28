@@ -82,11 +82,11 @@ export default function HomePage() {
         }
       >
         <h1>
-          <span className="eyebrow anim-fade mb-7" style={{ "--d": "0.1s" } as React.CSSProperties}>
+          <span className="eyebrow anim-fade mb-4 md:mb-7" style={{ "--d": "0.1s" } as React.CSSProperties}>
             Dallas design-build renovation studio
           </span>
           <Lines
-            className="mt-6 font-display text-[clamp(3.1rem,6.1vw,7.4rem)] leading-[0.92] tracking-[-0.03em]"
+            className="mt-3 font-display text-[clamp(3.1rem,6.1vw,7.4rem)] md:mt-6 leading-[0.92] tracking-[-0.03em]"
             delay={0.15}
             lines={[
               "Drawn by hand.",
@@ -97,11 +97,11 @@ export default function HomePage() {
             ]}
           />
         </h1>
-        <p className="lede anim-fade mt-8 max-w-md" style={{ "--d": "0.5s" } as React.CSSProperties}>
+        <p className="lede anim-fade mt-5 max-w-md max-md:text-base md:mt-8" style={{ "--d": "0.5s" } as React.CSSProperties}>
           Architects, designers and makers under one roof. We renovate homes across Highland Park, Preston Hollow and DFW, from the first pencil line to the final
           coat of wax.
         </p>
-        <div className="anim-fade mt-9 flex flex-wrap items-center gap-6" style={{ "--d": "0.65s" } as React.CSSProperties}>
+        <div className="anim-fade mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 md:mt-9" style={{ "--d": "0.65s" } as React.CSSProperties}>
           <Button href="/contact">Book a consultation</Button>
           <TextLink href="/work">See the work</TextLink>
         </div>
