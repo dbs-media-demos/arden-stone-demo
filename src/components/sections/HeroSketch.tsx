@@ -1,0 +1,216 @@
+"use client";
+
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import clsx from "clsx";
+import { gsap, isTouch, prefersReducedMotion, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import type { Pic } from "@/lib/images";
+
+export type HeroSlide = { photo: Pic; sketch: Pic; sheet: string; room: string; place: string; position?: string };
+
+const SLIDE_MS = 7200;
+
+/**
+ * The home hero. A pencil drawing of each room "develops" into the photograph
+ * behind a bronze drafting line (first slide is pure CSS, so it paints with the HTML).
+ * On desktop a lens follows the pointer and shows the drawing underneath the photo,
+ * and scrolling opens the frame out to full bleed.
+ */
+export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; children: React.ReactNode; footer: React.ReactNode }) {
+  const root = useRef<HTMLElement>(null);
+  const frame = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(0);
+  const [extra, setExtra] = useState(false); // other slides mount after the first has painted
+  const [paused, setPaused] = useState(false);
+  const busy = useRef(false);
+
+  // Mount the other rooms once the browser is idle, so they never compete with the LCP.
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    const id = w.requestIdleCallback ? w.requestIdleCallback(() => setExtra(true), { timeout: 2500 }) : window.setTimeout(() => setExtra(true), 1800);
+    return () => (w.requestIdleCallback ? (window as unknown as { cancelIdleCallback: (n: number) => void }).cancelIdleCallback(id) : window.clearTimeout(id));
+  }, []);
+
+  const goTo = (next: number) => {
+    const el = frame.current;
+    if (!el || busy.current || next === index) return;
+    const slidesEls = el.querySelectorAll<HTMLElement>("[data-slide]");
+    const incoming = slidesEls[next];
+    const outgoing = slidesEls[index];
+    if (!incoming || !outgoing) return;
+    busy.current = true;
+    const photo = incoming.querySelector<HTMLElement>("[data-photo]");
+    const sketch = incoming.querySelector<HTMLElement>("[data-sketch]");
+    const line = el.querySelector<HTMLElement>("[data-line]");
+    gsap.set(incoming, { zIndex: 3, autoAlpha: 1 });
+    gsap.set(outgoing, { zIndex: 2 });
+    photo?.classList.remove("hero-develop");
+    line?.classList.remove("hero-draft-line");
+    const tl = gsap.timeline({
+      onComplete: () => {
+        gsap.set(outgoing, { autoAlpha: 0, zIndex: 1 });
+        gsap.set(incoming, { zIndex: 2 });
+        busy.current = false;
+      },
+    });
+    tl.fromTo(sketch, { opacity: 0 }, { opacity: 1, duration: 0.9, ease: "power2.out" })
+      .fromTo(photo, { clipPath: "inset(0% 0% 0% 100%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 2.4, ease: "power2.inOut" }, 0.7)
+      .fromTo(line, { left: "100%", opacity: 1 }, { left: "0%", duration: 2.4, ease: "power2.inOut" }, 0.7)
+      .to(line, { opacity: 0, duration: 0.3 }, 2.8);
+    setIndex(next);
+  };
+
+  // Auto-advance.
+  useEffect(() => {
+    if (!extra || paused || prefersReducedMotion()) return;
+    const id = window.setTimeout(() => goTo((index + 1) % slides.length), index === 0 ? SLIDE_MS + 1400 : SLIDE_MS);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extra, paused, index, slides.length]);
+
+  // Pause when the tab is hidden.
+  useEffect(() => {
+    const onVis = () => setPaused(document.hidden);
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  useGSAP(
+    () => {
+      const el = frame.current;
+      const section = root.current;
+      if (!el || !section || prefersReducedMotion()) return;
+
+      // Drawing lens (desktop pointer only).
+      if (!isTouch()) {
+        const r = { v: 0 };
+        const setR = () => el.style.setProperty("--lr", `${r.v}px`);
+        const move = (e: PointerEvent) => {
+          const b = el.getBoundingClientRect();
+          el.style.setProperty("--lx", `${e.clientX - b.left}px`);
+          el.style.setProperty("--ly", `${e.clientY - b.top}px`);
+        };
+        const enter = () => gsap.to(r, { v: Math.min(170, window.innerWidth * 0.11), duration: 0.9, ease: "expo.out", onUpdate: setR });
+        const leave = () => gsap.to(r, { v: 0, duration: 0.6, ease: "power3.out", onUpdate: setR });
+        el.addEventListener("pointermove", move);
+        el.addEventListener("pointerenter", enter);
+        el.addEventListener("pointerleave", leave);
+      }
+
+      // Desktop: the frame opens out to full bleed as you scroll, the headline column drifts away.
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 1024px)", () => {
+        const copy = section.querySelector("[data-hero-copy]");
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: section, start: "top top", end: "+=70%", scrub: 0.6, pin: true, anticipatePin: 1 },
+        });
+        tl.fromTo(
+          el,
+          { clipPath: "inset(calc(var(--header-h) + 0.75rem) var(--gutter) 5.5rem 44% round 2px)" },
+          { clipPath: "inset(0rem 0rem 0rem 0% round 0px)", ease: "none" },
+        )
+          .to(copy, { yPercent: -18, opacity: 0, ease: "none" }, 0)
+          .fromTo(el.querySelectorAll("[data-zoom]"), { scale: 1.08 }, { scale: 1, ease: "none" }, 0);
+        return () => ScrollTrigger.refresh();
+      });
+      return () => mm.revert();
+    },
+    { scope: root },
+  );
+
+  return (
+    <section ref={root} className="relative lg:h-svh lg:min-h-[640px]" aria-label="Introduction">
+      <div data-hero-copy className="shell relative z-10 flex flex-col pt-[calc(var(--header-h)+2.5rem)] lg:h-full lg:w-[44%] lg:max-w-none lg:justify-center lg:pt-[var(--header-h)] lg:pr-10">
+        {children}
+      </div>
+
+      {/* Frame: mobile = block below the copy; desktop = full-bleed layer clipped to the right column. */}
+      <div
+        ref={frame}
+        className="lens-host relative mx-[var(--gutter)] mt-10 h-[64svh] min-h-[420px] overflow-hidden bg-paper lg:absolute lg:inset-0 lg:m-0 lg:h-auto lg:[clip-path:inset(calc(var(--header-h)+0.75rem)_var(--gutter)_5.5rem_44%_round_2px)]"
+      >
+        {slides.map((s, i) => {
+          if (i > 0 && !extra) return null;
+          return (
+            <div key={s.photo.src} data-slide className={clsx("absolute inset-0", i === 0 ? "z-2" : "invisible z-1 opacity-0")}>
+              <div data-zoom className="absolute inset-0">
+                <div data-sketch className="absolute inset-0">
+                  <Image
+                    src={s.sketch.src}
+                    alt=""
+                    fill
+                    sizes="100vw"
+                    quality={60}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    className="object-cover"
+                    style={{ objectPosition: s.position }}
+                  />
+                </div>
+                <div data-photo className={clsx("lens absolute inset-0", i === 0 && "hero-develop")}>
+                  <Image
+                    src={s.photo.src}
+                    alt={s.photo.alt}
+                    fill
+                    sizes="100vw"
+                    quality={75}
+                    preload={i === 0}
+                    placeholder="blur"
+                    blurDataURL={s.photo.blurDataURL}
+                    className="object-cover"
+                    style={{ objectPosition: s.position }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        <span data-line aria-hidden className="hero-draft-line pointer-events-none absolute top-0 bottom-0 z-10 w-px bg-bronze shadow-[0_0_0_1px_rgba(196,151,100,0.25)]" style={{ left: "0%", opacity: 0 }} />
+
+        {/* Sheet chrome, aligned to the initially visible column on desktop. */}
+        <div className="pointer-events-none absolute inset-0 z-20 lg:top-[calc(var(--header-h)+0.75rem)] lg:right-[var(--gutter)] lg:bottom-[5.5rem] lg:left-[44%]">
+          <div className="absolute right-4 bottom-4 left-4 flex items-end justify-between gap-4 text-ink md:right-6 md:bottom-6 md:left-6">
+            <div className="rounded-sm bg-ivory/88 px-3 py-2 backdrop-blur-sm">
+              <p className="label">
+                <span className="mr-2 border border-ink/40 px-1">{slides[index].sheet}</span>
+                {slides[index].room}
+              </p>
+              <p className="label mt-1 text-muted">{slides[index].place}</p>
+            </div>
+            <div className="pointer-events-auto flex items-center gap-3 rounded-sm bg-ivory/88 px-3 py-2.5 backdrop-blur-sm">
+              <span className="label tabular">
+                {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+              </span>
+              <div className="flex gap-1.5">
+                {slides.map((s, i) => (
+                  <button
+                    key={s.photo.src}
+                    type="button"
+                    onClick={() => extra && goTo(i)}
+                    aria-label={`Show ${s.room}`}
+                    aria-current={i === index}
+                    className="relative flex h-6 w-8 items-center"
+                  >
+                    <span className="absolute inset-x-0 h-px bg-ink/25" />
+                    {i === index && (
+                      <span
+                        key={`${index}-${paused}`}
+                        className="absolute inset-x-0 h-px origin-left bg-ink"
+                        style={{ animation: extra && !paused ? `bar-fill ${(index === 0 ? SLIDE_MS + 1400 : SLIDE_MS) / 1000}s linear both` : undefined }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p className="label absolute top-4 right-4 hidden rounded-sm bg-ivory/88 px-3 py-2 text-ink backdrop-blur-sm lg:block">
+            Move over the photo to see the drawing
+          </p>
+        </div>
+      </div>
+
+      <div className="shell relative z-10 lg:absolute lg:inset-x-0 lg:bottom-0 lg:max-w-none">{footer}</div>
+    </section>
+  );
+}

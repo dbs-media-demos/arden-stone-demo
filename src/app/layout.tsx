@@ -1,93 +1,72 @@
-import type { Metadata } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Cormorant_Garamond, IBM_Plex_Mono, Manrope } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import CustomCursor from "@/components/CustomCursor";
-import SmoothScroll from "@/components/SmoothScroll";
-import PageTransitionProvider from "@/components/PageTransitionProvider";
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, CONTACT } from "@/lib/site";
+import { Cursor } from "@/components/layout/Cursor";
+import { DemoBadge } from "@/components/layout/DemoBadge";
+import { Footer } from "@/components/layout/Footer";
+import { Header } from "@/components/layout/Header";
+import { MobileBar } from "@/components/layout/MobileBar";
+import { SmoothScroll } from "@/components/layout/SmoothScroll";
+import { JsonLd } from "@/components/ui/JsonLd";
+import { businessSchema, graph, websiteSchema } from "@/lib/schema";
+import { ogImageUrl } from "@/lib/seo";
+import { noindex, site, siteUrl } from "@/lib/site";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500"],
   style: ["normal", "italic"],
-  variable: "--font-display",
+  variable: "--font-cormorant",
   display: "swap",
 });
+const manrope = Manrope({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-manrope", display: "swap" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-plex-mono", display: "swap" });
 
-const manrope = Manrope({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-body",
-  display: "swap",
-});
+const defaultTitle = "Arden & Stone | Dallas Design-Build Renovation Studio";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: "Arden & Stone — Home Renovation Studio | Design, Build & Interiors",
-    template: "%s | Arden & Stone",
-  },
-  description: SITE_DESCRIPTION,
-  applicationName: SITE_NAME,
-  authors: [{ name: SITE_NAME }],
-  creator: SITE_NAME,
-  publisher: SITE_NAME,
+  metadataBase: new URL(siteUrl),
+  title: { default: defaultTitle, template: `%s | ${site.name}` },
+  description: site.description,
+  applicationName: site.name,
+  authors: [{ name: site.name }],
+  creator: "DBS Media",
+  formatDetection: { telephone: false },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    locale: "en_GB",
+    locale: "en_US",
     url: "/",
-    siteName: SITE_NAME,
-    title: "Arden & Stone — Home Renovation Studio",
-    description: SITE_DESCRIPTION,
+    siteName: site.name,
+    title: defaultTitle,
+    description: site.description,
+    images: [{ url: ogImageUrl("Drawn by hand. Built by the same hands.", "Dallas design-build studio", "/images/hero/kitchen.jpg"), width: 1200, height: 630 }],
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "Arden & Stone — Home Renovation Studio",
-    description: SITE_DESCRIPTION,
-  },
+  twitter: { card: "summary_large_image", title: defaultTitle, description: site.description },
+  robots: noindex ? { index: false, follow: false, googleBot: { index: false, follow: false } } : { index: true, follow: true },
 };
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "HomeAndConstructionBusiness",
-  "@id": `${SITE_URL}/#organization`,
-  name: SITE_NAME,
-  description: SITE_DESCRIPTION,
-  url: SITE_URL,
-  telephone: CONTACT.phone,
-  email: CONTACT.email,
-  address: {
-    "@type": "PostalAddress",
-    streetAddress: CONTACT.street,
-    addressLocality: CONTACT.locality,
-    postalCode: CONTACT.postalCode,
-    addressCountry: CONTACT.country,
-  },
-  priceRange: "$$$",
-  openingHoursSpecification: {
-    "@type": "OpeningHoursSpecification",
-    dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-    opens: "09:00",
-    closes: "18:00",
-  },
-  sameAs: [CONTACT.instagram, CONTACT.linkedin],
+export const viewport: Viewport = {
+  themeColor: "#f8f6f2",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${manrope.variable}`}>
-      <body className="grain">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+    <html lang="en-US" className={`${cormorant.variable} ${manrope.variable} ${plexMono.variable}`}>
+      <body>
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-ivory">
+          Skip to content
+        </a>
+        <JsonLd data={graph(businessSchema(), websiteSchema())} />
         <SmoothScroll />
-        <CustomCursor />
-        <Navbar />
-        <PageTransitionProvider>
-          <main>{children}</main>
-        </PageTransitionProvider>
+        <Header />
+        <main id="main">{children}</main>
         <Footer />
+        <MobileBar />
+        <DemoBadge />
+        <Cursor />
+        <div className="grain" aria-hidden />
       </body>
     </html>
   );

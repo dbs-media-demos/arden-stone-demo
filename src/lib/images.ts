@@ -1,0 +1,17 @@
+import { IMAGE_META } from "@/data/images.gen";
+
+export type ImageKey = keyof typeof IMAGE_META;
+
+/** Everything next/image needs, resolved on the server so client bundles never ship the manifest. */
+export type Pic = {
+  src: string;
+  width: number;
+  height: number;
+  blurDataURL: string;
+  alt: string;
+};
+
+export function pic(key: ImageKey, alt: string): Pic {
+  const [width, height, blurDataURL] = IMAGE_META[key];
+  return { src: `/images/${key}.jpg`, width, height, blurDataURL, alt };
+}
