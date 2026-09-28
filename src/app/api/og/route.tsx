@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
-import { siteUrl } from "@/lib/site";
 
 // Brand fonts read once; URLs relative to this file are traced into the deployment bundle.
 const [serif, serifItalic, mono] = await Promise.all([
@@ -17,7 +16,7 @@ export async function GET(req: Request) {
   const imagePath = searchParams.get("image");
   // Only our own photos; resized through the image optimizer to keep the render light.
   const image = imagePath && /^\/images\/[\w/-]+\.jpg$/.test(imagePath) ? `${origin}/_next/image?url=${encodeURIComponent(imagePath)}&w=1080&q=75` : null;
-  const size = title.length > 60 ? 64 : title.length > 36 ? 76 : 92;
+  const size = title.length > 60 ? 48 : title.length > 34 ? 58 : title.length > 20 ? 68 : 84;
 
   return new ImageResponse(
     (
@@ -38,9 +37,8 @@ export async function GET(req: Request) {
             <div style={{ display: "flex", fontFamily: "Plex", fontSize: 18, letterSpacing: 3, textTransform: "uppercase", color: "#7e552c" }}>{eyebrow}</div>
             <div style={{ display: "flex", fontSize: size, lineHeight: 0.98, letterSpacing: -1.5 }}>{title}</div>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "Plex", fontSize: 16, letterSpacing: 2, color: "#6b625b", textTransform: "uppercase" }}>
-            <span>Dallas · Fort Worth</span>
-            <span>{new URL(siteUrl).host}</span>
+          <div style={{ display: "flex", fontFamily: "Plex", fontSize: 16, letterSpacing: 2, color: "#6b625b", textTransform: "uppercase" }}>
+            Design-build · Dallas–Fort Worth
           </div>
         </div>
         {image && (
