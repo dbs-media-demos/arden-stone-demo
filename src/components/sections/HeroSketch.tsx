@@ -27,9 +27,9 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
   // Mount the other rooms once the browser is idle, so they never compete with the LCP.
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
-    const id = w.requestIdleCallback ? w.requestIdleCallback(() => setExtra(true), { timeout: 2500 }) : window.setTimeout(() => setExtra(true), 1800);
-    return () => (w.requestIdleCallback ? (window as unknown as { cancelIdleCallback: (n: number) => void }).cancelIdleCallback(id) : window.clearTimeout(id));
+    const hasIdle = "requestIdleCallback" in window;
+    const id = hasIdle ? window.requestIdleCallback(() => setExtra(true), { timeout: 2500 }) : window.setTimeout(() => setExtra(true), 1800);
+    return () => (hasIdle ? window.cancelIdleCallback(id) : window.clearTimeout(id));
   }, []);
 
   const goTo = (next: number) => {
@@ -102,14 +102,25 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
       const mm = gsap.matchMedia();
       mm.add("(min-width: 1024px)", () => {
         const copy = section.querySelector("[data-hero-copy]");
+        // Same box as the CSS start state, in plain numbers GSAP can interpolate.
+        const start = () => {
+          const cs = getComputedStyle(document.documentElement);
+          const px = (v: string) => {
+            const probe = document.createElement("div");
+            probe.style.cssText = `position:absolute;visibility:hidden;width:${v}`;
+            document.body.appendChild(probe);
+            const w = probe.getBoundingClientRect().width;
+            probe.remove();
+            return w;
+          };
+          const top = px("calc(var(--header-h) + 0.75rem)");
+          const side = px(cs.getPropertyValue("--gutter").trim() || "3rem");
+          return `inset(${top}px ${side}px 88px 44%)`;
+        };
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: section, start: "top top", end: "+=70%", scrub: 0.6, pin: true, anticipatePin: 1 },
+          scrollTrigger: { trigger: section, start: "top top", end: "+=70%", scrub: 0.6, pin: true, anticipatePin: 1, invalidateOnRefresh: true },
         });
-        tl.fromTo(
-          el,
-          { clipPath: "inset(calc(var(--header-h) + 0.75rem) var(--gutter) 5.5rem 44% round 2px)" },
-          { clipPath: "inset(0rem 0rem 0rem 0% round 0px)", ease: "none" },
-        )
+        tl.fromTo(el, { clipPath: start }, { clipPath: "inset(0px 0px 0px 0%)", ease: "none" })
           .to(copy, { yPercent: -18, opacity: 0, ease: "none" }, 0)
           .fromTo(el.querySelectorAll("[data-zoom]"), { scale: 1.08 }, { scale: 1, ease: "none" }, 0);
         return () => ScrollTrigger.refresh();
@@ -121,14 +132,14 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
 
   return (
     <section ref={root} className="relative lg:h-svh lg:min-h-[640px]" aria-label="Introduction">
-      <div data-hero-copy className="shell relative z-10 flex flex-col pt-[calc(var(--header-h)+2.5rem)] lg:h-full lg:w-[44%] lg:max-w-none lg:justify-center lg:pt-[var(--header-h)] lg:pr-10">
+      <div data-hero-copy className="shell relative z-10 flex flex-col pt-[calc(var(--header-h)+2.5rem)] lg:mx-0 lg:h-full lg:w-[44%] lg:max-w-none lg:justify-center lg:pt-[var(--header-h)] lg:pr-10">
         {children}
       </div>
 
       {/* Frame: mobile = block below the copy; desktop = full-bleed layer clipped to the right column. */}
       <div
         ref={frame}
-        className="lens-host relative mx-[var(--gutter)] mt-10 h-[64svh] min-h-[420px] overflow-hidden bg-paper lg:absolute lg:inset-0 lg:m-0 lg:h-auto lg:[clip-path:inset(calc(var(--header-h)+0.75rem)_var(--gutter)_5.5rem_44%_round_2px)]"
+        className="lens-host relative mx-[var(--gutter)] mt-10 h-[64svh] min-h-[420px] overflow-hidden bg-paper lg:absolute lg:inset-0 lg:m-0 lg:h-auto lg:[clip-path:inset(calc(var(--header-h)+0.75rem)_var(--gutter)_88px_44%)]"
       >
         {slides.map((s, i) => {
           if (i > 0 && !extra) return null;
@@ -178,10 +189,10 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
               <p className="label mt-1 text-muted">{slides[index].place}</p>
             </div>
             <div className="pointer-events-auto flex items-center gap-3 rounded-sm bg-ivory/88 px-3 py-2.5 backdrop-blur-sm">
-              <span className="label tabular">
+              <span className="label whitespace-nowrap tabular">
                 {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
               </span>
-              <div className="flex gap-1.5">
+              <div className="hidden gap-1.5 sm:flex">
                 {slides.map((s, i) => (
                   <button
                     key={s.photo.src}

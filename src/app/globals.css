@@ -28,36 +28,6 @@
   --header-h: 4.25rem;
 }
 
-.theme-ivory,
-.theme-stone {
-  --bg: var(--ivory);
-  --fg: var(--ink);
-  --muted: color-mix(in oklab, var(--ink) 66%, var(--ivory));
-  --faint: color-mix(in oklab, var(--ink) 58%, var(--ivory));
-  --line: color-mix(in oklab, var(--ink) 14%, transparent);
-  --line-strong: color-mix(in oklab, var(--ink) 30%, transparent);
-  --surface: var(--paper);
-  --accent: var(--bronze-text);
-  background-color: var(--bg);
-  color: var(--fg);
-}
-.theme-stone {
-  --bg: var(--paper);
-  --surface: var(--stone);
-}
-.theme-ink {
-  --bg: var(--ink);
-  --fg: var(--ivory);
-  --muted: color-mix(in oklab, var(--ivory) 70%, var(--ink));
-  --faint: color-mix(in oklab, var(--ivory) 60%, var(--ink));
-  --line: color-mix(in oklab, var(--ivory) 14%, transparent);
-  --line-strong: color-mix(in oklab, var(--ivory) 30%, transparent);
-  --surface: var(--ink-2);
-  --accent: var(--bronze-light);
-  background-color: var(--bg);
-  color: var(--fg);
-}
-
 @theme inline {
   --color-ivory: var(--ivory);
   --color-paper: var(--paper);
@@ -86,506 +56,542 @@
   --ease-in-out-quart: var(--ease-in-out-quart);
 }
 
-/* ───────────────────────── base ───────────────────────── */
+@layer base {
+  /* ───────────────────────── base ───────────────────────── */
 
-html {
-  -webkit-text-size-adjust: 100%;
-  scroll-padding-top: calc(var(--header-h) + 1rem);
-}
-html:not(.lenis) {
-  scroll-behavior: smooth;
-}
-body {
-  font-family: var(--font-sans);
-  background: var(--ivory);
-  color: var(--ink);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  overflow-x: clip;
-}
-::selection {
-  background: color-mix(in oklab, var(--bronze-light) 40%, transparent);
-  color: var(--ink);
-}
-:focus-visible {
-  outline: 2px solid var(--bronze);
-  outline-offset: 3px;
-  border-radius: 2px;
-}
-img,
-video {
-  max-width: 100%;
-}
-
-/* Lenis */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
-}
-.lenis.lenis-stopped {
-  overflow: hidden;
-}
-
-/* ───────────────────────── type ───────────────────────── */
-
-.font-display {
-  font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  font-feature-settings: "liga", "dlig";
-}
-.display-xxl {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(3.4rem, 11.2vw, 12.5rem);
-  line-height: 0.88;
-  letter-spacing: -0.035em;
-}
-.display-xl {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(2.9rem, 7.6vw, 8.25rem);
-  line-height: 0.92;
-  letter-spacing: -0.03em;
-}
-.display-l {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(2.35rem, 5.2vw, 5.4rem);
-  line-height: 0.98;
-  letter-spacing: -0.025em;
-}
-.display-m {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(1.85rem, 3.3vw, 3.25rem);
-  line-height: 1.05;
-  letter-spacing: -0.015em;
-}
-.display-s {
-  font-family: var(--font-display);
-  font-weight: 500;
-  font-size: clamp(1.4rem, 2vw, 1.9rem);
-  line-height: 1.12;
-}
-.lede {
-  font-size: clamp(1.08rem, 1.35vw, 1.3rem);
-  line-height: 1.6;
-  color: var(--muted);
-}
-/* Architect's-sheet labels: tiny mono caps. */
-.label {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  line-height: 1.4;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--accent);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.eyebrow::before {
-  content: "";
-  width: 1.75rem;
-  height: 1px;
-  background: currentColor;
-}
-.italic-accent {
-  font-style: italic;
-  color: var(--accent);
-}
-
-.shell {
-  width: 100%;
-  max-width: 1680px;
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-}
-.hairline {
-  height: 1px;
-  background: var(--line);
-}
-
-/* ───────────────────────── intro animations (CSS only, above the fold) ───────────────────────── */
-
-@keyframes heading-in {
-  from {
-    clip-path: inset(0 0 42% 0);
-    transform: translateY(0.28em);
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: calc(var(--header-h) + 1rem);
   }
-  to {
-    clip-path: inset(-12% -2% -22% -2%);
-    transform: none;
+  html:not(.lenis) {
+    scroll-behavior: smooth;
   }
-}
-@keyframes fade-in {
-  from {
-    opacity: 0.14;
-    transform: translateY(18px);
+  body {
+    font-family: var(--font-sans);
+    background: var(--ivory);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
   }
-  to {
-    opacity: 1;
-    transform: none;
+  ::selection {
+    background: color-mix(in oklab, var(--bronze-light) 40%, transparent);
+    color: var(--ink);
   }
-}
-.anim-heading {
-  animation: heading-in 1.35s var(--ease-out-expo) var(--d, 0s) both;
-}
-.anim-fade {
-  animation: fade-in 1.2s var(--ease-out-expo) calc(var(--d, 0s) + 0.1s) both;
-}
-/* Line-by-line heading intro. Each .ln is a masked line. */
-.lines .ln {
-  display: block;
-  overflow: clip;
-  padding-bottom: 0.08em;
-  margin-bottom: -0.08em;
-}
-.lines .ln > span {
-  display: block;
-  animation: line-up 1.4s var(--ease-out-expo) calc(var(--d, 0s) + var(--i, 0) * 0.09s) both;
-}
-@keyframes line-up {
-  from {
-    transform: translateY(62%) rotate(1.5deg);
-    opacity: 0.2;
+  :focus-visible {
+    outline: 2px solid var(--bronze);
+    outline-offset: 3px;
+    border-radius: 2px;
   }
-  to {
-    transform: none;
-    opacity: 1;
+  img,
+  video {
+    max-width: 100%;
   }
-}
 
-/* Hero: the drawing develops into the photograph, right to left behind a bronze drafting line.
-   The photo starts a third revealed so the LCP paints at once. */
-@keyframes develop {
-  from {
-    clip-path: inset(0 0 0 64%);
+  /* Lenis */
+  html.lenis,
+  html.lenis body {
+    height: auto;
   }
-  to {
-    clip-path: inset(0 0 0 0);
-  }
-}
-@keyframes draft-line {
-  0% {
-    left: 64%;
-    opacity: 1;
-  }
-  88% {
-    opacity: 1;
-  }
-  100% {
-    left: 0%;
-    opacity: 0;
-  }
-}
-.hero-develop {
-  animation: develop 2.6s var(--ease-drawn) 0.3s both;
-}
-.hero-draft-line {
-  animation: draft-line 2.6s var(--ease-drawn) 0.3s both;
-}
-/* The drawing lens: a hole in the photo that follows the pointer. */
-.lens {
-  --lx: 50%;
-  --ly: 50%;
-  --lr: 0px;
-  -webkit-mask-image: radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 97%, #000 100%);
-  mask-image: radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 97%, #000 100%);
-}
-@keyframes bar-fill {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-/* ───────────────────────── marquee ───────────────────────── */
-
-@keyframes marquee {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-.marquee-track {
-  animation: marquee var(--marquee-duration, 45s) linear infinite;
-}
-.marquee:hover .marquee-track {
-  animation-play-state: paused;
-}
-
-/* ───────────────────────── grain ───────────────────────── */
-
-.grain {
-  pointer-events: none;
-  position: fixed;
-  inset: -50%;
-  z-index: 90;
-  opacity: 0.045;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation: grain 8s steps(8) infinite;
-}
-@keyframes grain {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  25% {
-    transform: translate(-3%, 4%);
-  }
-  50% {
-    transform: translate(4%, -2%);
-  }
-  75% {
-    transform: translate(-2%, -4%);
-  }
-}
-
-/* ───────────────────────── links & buttons ───────────────────────── */
-
-.link-draw {
-  background: linear-gradient(currentColor, currentColor) no-repeat right bottom / 0 1px;
-  transition: background-size 0.6s var(--ease-out-expo);
-}
-.link-draw:hover,
-.link-draw:focus-visible,
-.link-draw[aria-current="page"] {
-  background-size: 100% 1px;
-  background-position: left bottom;
-}
-
-.btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.85rem;
-  min-height: 3.25rem;
-  padding: 0 1.6rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  overflow: hidden;
-  isolation: isolate;
-  transition: color 0.5s var(--ease-out-expo), border-color 0.5s;
-  white-space: nowrap;
-}
-.btn::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  transform: translateY(101%);
-  transition: transform 0.6s var(--ease-out-expo);
-}
-.btn:hover::before,
-.btn:focus-visible::before {
-  transform: none;
-}
-.btn-solid {
-  background: var(--ink);
-  color: var(--ivory);
-}
-.btn-solid::before {
-  background: var(--bronze);
-}
-.theme-ink .btn-solid {
-  background: var(--ivory);
-  color: var(--ink);
-}
-.theme-ink .btn-solid::before {
-  background: var(--bronze-light);
-}
-.btn-line {
-  border: 1px solid var(--line-strong);
-  color: var(--fg);
-}
-.btn-line::before {
-  background: var(--fg);
-}
-.btn-line:hover,
-.btn-line:focus-visible {
-  color: var(--bg);
-  border-color: var(--fg);
-}
-.btn .arrow {
-  transition: transform 0.6s var(--ease-out-expo);
-}
-.btn:hover .arrow {
-  transform: translateX(4px);
-}
-
-/* ───────────────────────── forms ───────────────────────── */
-
-.field {
-  width: 100%;
-  border: 0;
-  border-bottom: 1px solid var(--line-strong);
-  background: transparent;
-  padding: 0.9rem 0;
-  font-size: 1.05rem;
-  color: var(--fg);
-  border-radius: 0;
-  transition: border-color 0.3s;
-}
-.field::placeholder {
-  color: var(--faint);
-}
-.field:focus {
-  outline: none;
-  border-color: var(--bronze);
-}
-.field[aria-invalid="true"] {
-  border-color: #a2341f;
-}
-
-input[type="range"].range {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 2.75rem;
-  background: transparent;
-  cursor: pointer;
-}
-input[type="range"].range::-webkit-slider-runnable-track {
-  height: 1px;
-  background: var(--line-strong);
-}
-input[type="range"].range::-moz-range-track {
-  height: 1px;
-  background: var(--line-strong);
-}
-input[type="range"].range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
-  margin-top: -11px;
-  border-radius: 50%;
-  background: var(--ink);
-  border: 5px solid var(--ivory);
-  box-shadow: 0 0 0 1px var(--ink);
-}
-input[type="range"].range::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--ink);
-  border: 5px solid var(--ivory);
-  box-shadow: 0 0 0 1px var(--ink);
-}
-
-/* ───────────────────────── utilities ───────────────────────── */
-
-.no-scrollbar {
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.text-balance {
-  text-wrap: balance;
-}
-.text-pretty {
-  text-wrap: pretty;
-}
-.tabular {
-  font-variant-numeric: tabular-nums;
-}
-/* Portrait duotone so mixed stock portraits read as one set. */
-.duotone {
-  filter: grayscale(1) sepia(0.28) contrast(1.02) brightness(1.02);
-}
-
-/* Custom cursor (fine pointers only). */
-.cursor {
-  display: none;
-}
-@media (hover: hover) and (pointer: fine) {
-  .cursor {
-    display: flex;
-  }
-}
-
-/* ───────────────────────── view transitions ───────────────────────── */
-
-::view-transition-old(site-header),
-::view-transition-new(site-header) {
-  animation: none;
-}
-::view-transition-old(.page) {
-  animation: page-out 560ms var(--ease-in-out-quart) both;
-}
-::view-transition-new(.page) {
-  animation: page-in 1000ms var(--ease-out-expo) 140ms both;
-}
-@keyframes page-out {
-  to {
-    opacity: 0;
-    transform: translateY(-3vh) scale(0.98);
-  }
-}
-@keyframes page-in {
-  from {
-    clip-path: inset(100% 0 0 0);
-    transform: translateY(10vh);
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-    transform: none;
-  }
-}
-::view-transition-group(.morph) {
-  animation-duration: 850ms;
-  animation-timing-function: var(--ease-out-expo);
-}
-::view-transition-old(.morph),
-::view-transition-new(.morph) {
-  height: 100%;
-  object-fit: cover;
-  overflow: clip;
-}
-
-/* ───────────────────────── reduced motion ───────────────────────── */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    animation-delay: 0s !important;
-    transition-duration: 0.001ms !important;
+  .lenis.lenis-smooth {
     scroll-behavior: auto !important;
   }
-  ::view-transition-old(*),
-  ::view-transition-new(*),
-  ::view-transition-group(*) {
-    animation-duration: 0s !important;
-    animation-delay: 0s !important;
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
   }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+}
+
+@layer components {
+  .theme-ivory,
+  .theme-stone {
+    --bg: var(--ivory);
+    --fg: var(--ink);
+    --muted: color-mix(in oklab, var(--ink) 66%, var(--ivory));
+    --faint: color-mix(in oklab, var(--ink) 58%, var(--ivory));
+    --line: color-mix(in oklab, var(--ink) 14%, transparent);
+    --line-strong: color-mix(in oklab, var(--ink) 30%, transparent);
+    --surface: var(--paper);
+    --accent: var(--bronze-text);
+    background-color: var(--bg);
+    color: var(--fg);
+  }
+  .theme-stone {
+    --bg: var(--paper);
+    --surface: var(--stone);
+  }
+  .theme-ink {
+    --bg: var(--ink);
+    --fg: var(--ivory);
+    --muted: color-mix(in oklab, var(--ivory) 70%, var(--ink));
+    --faint: color-mix(in oklab, var(--ivory) 60%, var(--ink));
+    --line: color-mix(in oklab, var(--ivory) 14%, transparent);
+    --line-strong: color-mix(in oklab, var(--ivory) 30%, transparent);
+    --surface: var(--ink-2);
+    --accent: var(--bronze-light);
+    background-color: var(--bg);
+    color: var(--fg);
+  }
+
+
+  /* ───────────────────────── type ───────────────────────── */
+
+  .font-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    font-feature-settings: "liga", "dlig";
+  }
+  .display-xxl {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(3.4rem, 11.2vw, 12.5rem);
+    line-height: 0.88;
+    letter-spacing: -0.035em;
+  }
+  .display-xl {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.9rem, 7.6vw, 8.25rem);
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+  }
+  .display-l {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.35rem, 5.2vw, 5.4rem);
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+  }
+  .display-m {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.85rem, 3.3vw, 3.25rem);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+  }
+  .display-s {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(1.4rem, 2vw, 1.9rem);
+    line-height: 1.12;
+  }
+  .lede {
+    font-size: clamp(1.08rem, 1.35vw, 1.3rem);
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  /* Architect's-sheet labels: tiny mono caps. */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 1.75rem;
+    height: 1px;
+    background: currentColor;
+  }
+  .italic-accent {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 1680px;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+  .hairline {
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* ───────────────────────── intro animations (CSS only, above the fold) ───────────────────────── */
+
+  @keyframes heading-in {
+    from {
+      clip-path: inset(0 0 42% 0);
+      transform: translateY(0.28em);
+    }
+    to {
+      clip-path: inset(-12% -2% -22% -2%);
+      transform: none;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0.14;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .anim-heading {
+    animation: heading-in 1.35s var(--ease-out-expo) var(--d, 0s) both;
+  }
+  .anim-fade {
+    animation: fade-in 1.2s var(--ease-out-expo) calc(var(--d, 0s) + 0.1s) both;
+  }
+  /* Line-by-line heading intro. Each .ln is a masked line. */
+  .lines .ln {
+    display: block;
+    overflow: clip;
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+  }
+  .lines .ln > span {
+    display: block;
+    animation: line-up 1.4s var(--ease-out-expo) calc(var(--d, 0s) + var(--i, 0) * 0.09s) both;
+  }
+  @keyframes line-up {
+    from {
+      transform: translateY(62%) rotate(1.5deg);
+      opacity: 0.2;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+
+  /* Hero: the drawing develops into the photograph, right to left behind a bronze drafting line.
+     The photo starts a third revealed so the LCP paints at once. */
+  @keyframes develop {
+    from {
+      clip-path: inset(0 0 0 64%);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes draft-line {
+    0% {
+      left: 64%;
+      opacity: 1;
+    }
+    88% {
+      opacity: 1;
+    }
+    100% {
+      left: 0%;
+      opacity: 0;
+    }
+  }
+  .hero-develop {
+    animation: develop 2.6s var(--ease-drawn) 0.3s both;
+  }
+  .hero-draft-line {
+    animation: draft-line 2.6s var(--ease-drawn) 0.3s both;
+  }
+  /* The drawing lens: a hole in the photo that follows the pointer. */
+  .lens {
+    --lx: 50%;
+    --ly: 50%;
+    --lr: 0px;
+    -webkit-mask-image: radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 97%, #000 100%);
+    mask-image: radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 97%, #000 100%);
+  }
+  @keyframes bar-fill {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  /* ───────────────────────── marquee ───────────────────────── */
+
+  @keyframes marquee {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+  .marquee-track {
+    animation: marquee var(--marquee-duration, 45s) linear infinite;
+  }
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+
+  /* ───────────────────────── grain ───────────────────────── */
+
   .grain {
+    pointer-events: none;
+    position: fixed;
+    inset: -50%;
+    z-index: 90;
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: grain 8s steps(8) infinite;
+  }
+  @keyframes grain {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    25% {
+      transform: translate(-3%, 4%);
+    }
+    50% {
+      transform: translate(4%, -2%);
+    }
+    75% {
+      transform: translate(-2%, -4%);
+    }
+  }
+
+  /* ───────────────────────── links & buttons ───────────────────────── */
+
+  .link-draw {
+    background: linear-gradient(currentColor, currentColor) no-repeat right bottom / 0 1px;
+    transition: background-size 0.6s var(--ease-out-expo);
+  }
+  .link-draw:hover,
+  .link-draw:focus-visible,
+  .link-draw[aria-current="page"] {
+    background-size: 100% 1px;
+    background-position: left bottom;
+  }
+
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    min-height: 3.25rem;
+    padding: 0 1.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    overflow: hidden;
+    isolation: isolate;
+    transition: color 0.5s var(--ease-out-expo), border-color 0.5s;
+    white-space: nowrap;
+  }
+  .btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    transform: translateY(101%);
+    transition: transform 0.6s var(--ease-out-expo);
+  }
+  .btn:hover::before,
+  .btn:focus-visible::before {
+    transform: none;
+  }
+  .btn-solid {
+    background: var(--ink);
+    color: var(--ivory);
+  }
+  .btn-solid::before {
+    background: var(--bronze);
+  }
+  .theme-ink .btn-solid {
+    background: var(--ivory);
+    color: var(--ink);
+  }
+  .theme-ink .btn-solid::before {
+    background: var(--bronze-light);
+  }
+  .btn-line {
+    border: 1px solid var(--line-strong);
+    color: var(--fg);
+  }
+  .btn-line::before {
+    background: var(--fg);
+  }
+  .btn-line:hover,
+  .btn-line:focus-visible {
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+  .btn .arrow {
+    transition: transform 0.6s var(--ease-out-expo);
+  }
+  .btn:hover .arrow {
+    transform: translateX(4px);
+  }
+
+  /* ───────────────────────── forms ───────────────────────── */
+
+  .field {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--line-strong);
+    background: transparent;
+    padding: 0.9rem 0;
+    font-size: 1.05rem;
+    color: var(--fg);
+    border-radius: 0;
+    transition: border-color 0.3s;
+  }
+  .field::placeholder {
+    color: var(--faint);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--bronze);
+  }
+  .field[aria-invalid="true"] {
+    border-color: #a2341f;
+  }
+
+  input[type="range"].range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2.75rem;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type="range"].range::-webkit-slider-runnable-track {
+    height: 1px;
+    background: var(--line-strong);
+  }
+  input[type="range"].range::-moz-range-track {
+    height: 1px;
+    background: var(--line-strong);
+  }
+  input[type="range"].range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    margin-top: -11px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 5px solid var(--ivory);
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+  input[type="range"].range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 5px solid var(--ivory);
+    box-shadow: 0 0 0 1px var(--ink);
+  }
+
+  /* ───────────────────────── utilities ───────────────────────── */
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Portrait duotone so mixed stock portraits read as one set. */
+  .duotone {
+    filter: grayscale(1) sepia(0.28) contrast(1.02) brightness(1.02);
+  }
+
+  /* Custom cursor (fine pointers only). */
+  .cursor {
+    display: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .cursor {
+      display: flex;
+    }
+  }
+
+  /* ───────────────────────── view transitions ───────────────────────── */
+
+  ::view-transition-old(site-header),
+  ::view-transition-new(site-header) {
+    animation: none;
+  }
+  ::view-transition-old(.page) {
+    animation: page-out 560ms var(--ease-in-out-quart) both;
+  }
+  ::view-transition-new(.page) {
+    animation: page-in 1000ms var(--ease-out-expo) 140ms both;
+  }
+  @keyframes page-out {
+    to {
+      opacity: 0;
+      transform: translateY(-3vh) scale(0.98);
+    }
+  }
+  @keyframes page-in {
+    from {
+      clip-path: inset(100% 0 0 0);
+      transform: translateY(10vh);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+      transform: none;
+    }
+  }
+  ::view-transition-group(.morph) {
+    animation-duration: 850ms;
+    animation-timing-function: var(--ease-out-expo);
+  }
+  ::view-transition-old(.morph),
+  ::view-transition-new(.morph) {
+    height: 100%;
+    object-fit: cover;
+    overflow: clip;
+  }
+
+  /* ───────────────────────── reduced motion ───────────────────────── */
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      animation-delay: 0s !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+    ::view-transition-old(*),
+    ::view-transition-new(*),
+    ::view-transition-group(*) {
+      animation-duration: 0s !important;
+      animation-delay: 0s !important;
+    }
+    .grain {
+      display: none;
+    }
   }
 }
