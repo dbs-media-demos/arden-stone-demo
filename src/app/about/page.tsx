@@ -127,8 +127,6 @@ export default function AboutPage() {
                     fill
                     sizes="(min-width: 1024px) 24vw, (min-width: 640px) 48vw, 100vw"
                     quality={75}
-                    placeholder="blur"
-                    blurDataURL={p.blurDataURL}
                     className="duotone object-cover transition-transform duration-[1.4s] ease-[var(--ease-out-expo)] group-hover:scale-105"
                   />
                 </div>

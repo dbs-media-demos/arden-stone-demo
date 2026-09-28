@@ -2,20 +2,32 @@
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, SplitText, useGSAP);
+  gsap.registerPlugin(ScrollTrigger, useGSAP);
   gsap.defaults({ ease: "expo.out", duration: 1.1 });
 }
 
-export const prefersReducedMotion = () =>
-  typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+export const prefersReducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export const isTouch = () => typeof window !== "undefined" && window.matchMedia("(hover: none), (pointer: coarse)").matches;
 
 /** True while the element's top edge is still below the fold (safe to hide for a reveal). */
 export const belowFold = (el: Element) => el.getBoundingClientRect().top > window.innerHeight * 0.92;
 
-export { gsap, ScrollTrigger, SplitText, useGSAP };
+/**
+ * Runs `cb` once the main thread is idle (after first paint and hydration), so
+ * below-the-fold animation setup never delays the LCP. Returns a cancel function.
+ */
+export function whenIdle(cb: () => void, timeout = 1200) {
+  if (typeof window === "undefined") return () => {};
+  if ("requestIdleCallback" in window) {
+    const id = window.requestIdleCallback(cb, { timeout });
+    return () => window.cancelIdleCallback(id);
+  }
+  const id = setTimeout(cb, 250);
+  return () => clearTimeout(id);
+}
+
+export { gsap, ScrollTrigger, useGSAP };

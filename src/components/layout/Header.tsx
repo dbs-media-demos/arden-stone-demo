@@ -158,7 +158,7 @@ export function Header() {
             ))}
           </ul>
         </nav>
-        <div className="shell relative grid gap-2 py-8 text-sm text-muted">
+        <div className="shell relative grid gap-2 pt-8 pb-32 text-sm text-muted">
           <a href={site.phoneHref} className="font-display text-3xl text-ivory tabular">
             {site.phone}
           </a>

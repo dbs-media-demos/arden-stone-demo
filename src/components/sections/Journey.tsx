@@ -54,12 +54,12 @@ export function Journey({ stages, heading }: { stages: JourneyStage[]; heading: 
   );
 
   return (
-    <section ref={root} className="theme-ink relative lg:h-svh" aria-labelledby="journey-title">
-      <div className="shell grid gap-12 py-24 lg:h-full lg:grid-cols-12 lg:gap-10 lg:py-0">
+    <section ref={root} className="theme-ink relative lg:h-svh lg:motion-reduce:h-auto" aria-labelledby="journey-title">
+      <div className="shell grid gap-12 py-24 lg:h-full lg:grid-cols-12 lg:gap-10 lg:py-0 lg:motion-reduce:py-24">
         {/* Left: heading + stage rail */}
         <div className="flex flex-col justify-center lg:col-span-5 lg:pt-[var(--header-h)]">
           {heading}
-          <ol className="relative mt-12 hidden gap-4 pl-6 lg:grid">
+          <ol className="relative mt-12 hidden gap-4 pl-6 lg:grid lg:motion-reduce:hidden">
             <span className="absolute top-1 bottom-1 left-0 w-px bg-line" aria-hidden />
             <span data-progress className="absolute top-1 bottom-1 left-0 w-px origin-top bg-bronze-light" aria-hidden />
             {stages.map((s, i) => (
@@ -73,7 +73,7 @@ export function Journey({ stages, heading }: { stages: JourneyStage[]; heading: 
         </div>
 
         {/* Right (desktop): stacked frames + the active stage's words */}
-        <div className="relative hidden lg:col-span-7 lg:block lg:py-[calc(var(--header-h)+1.5rem)]">
+        <div className="relative hidden lg:col-span-7 lg:block lg:py-[calc(var(--header-h)+1.5rem)] lg:motion-reduce:hidden">
           <div className="relative h-[58%] overflow-hidden rounded-sm">
             {stages.map((s, i) => (
               <div key={s.n} data-frame className="absolute inset-0 overflow-hidden" style={{ zIndex: i }}>
@@ -99,7 +99,7 @@ export function Journey({ stages, heading }: { stages: JourneyStage[]; heading: 
         </div>
 
         {/* Phones: simple list */}
-        <ol className="grid gap-14 lg:hidden">
+        <ol className="grid gap-14 lg:hidden lg:col-span-12 lg:motion-reduce:grid lg:motion-reduce:grid-cols-2 lg:motion-reduce:gap-x-10">
           {stages.map((s) => (
             <li key={s.n}>
               <div className="relative aspect-[4/3] overflow-hidden rounded-sm">

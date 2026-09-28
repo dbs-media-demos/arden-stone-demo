@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import clsx from "clsx";
-import { gsap, prefersReducedMotion, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, ScrollTrigger, useGSAP, whenIdle } from "@/lib/gsap";
 import type { Pic } from "@/lib/images";
 
 type Props = {
@@ -26,23 +26,27 @@ export function BeforeAfter({ before, after, beforeLabel = "Before", afterLabel 
   const touched = useRef(false);
 
   useGSAP(
-    () => {
+    (_ctx, contextSafe) => {
       const el = root.current;
       if (!el || prefersReducedMotion()) return;
-      const state = { p: 50 };
-      ScrollTrigger.create({
-        trigger: el,
-        start: "top 70%",
-        once: true,
-        onEnter: () => {
-          if (touched.current) return;
-          gsap
-            .timeline({ onUpdate: () => !touched.current && setPos(state.p) })
-            .to(state, { p: 88, duration: 1.1, ease: "power2.inOut" })
-            .to(state, { p: 12, duration: 1.6, ease: "power2.inOut" })
-            .to(state, { p: 50, duration: 1.1, ease: "power3.out" });
-        },
-      });
+      return whenIdle(
+        contextSafe!(() => {
+          const state = { p: 50 };
+          ScrollTrigger.create({
+            trigger: el,
+            start: "top 70%",
+            once: true,
+            onEnter: () => {
+              if (touched.current) return;
+              gsap
+                .timeline({ onUpdate: () => !touched.current && setPos(state.p) })
+                .to(state, { p: 88, duration: 1.1, ease: "power2.inOut" })
+                .to(state, { p: 12, duration: 1.6, ease: "power2.inOut" })
+                .to(state, { p: 50, duration: 1.1, ease: "power3.out" });
+            },
+          });
+        }),
+      );
     },
     { scope: root },
   );
@@ -54,9 +58,9 @@ export function BeforeAfter({ before, after, beforeLabel = "Before", afterLabel 
       className={clsx("group relative overflow-hidden bg-paper select-none", className)}
       style={{ "--pos": `${pos}%` } as React.CSSProperties}
     >
-      <Image src={after.src} alt={after.alt} fill sizes={sizes} quality={75} placeholder="blur" blurDataURL={after.blurDataURL} className="object-cover" />
+      <Image src={after.src} alt={after.alt} fill sizes={sizes} quality={75} className="object-cover" />
       <div className="absolute inset-0" style={{ clipPath: "inset(0 calc(100% - var(--pos)) 0 0)" }}>
-        <Image src={before.src} alt={before.alt} fill sizes={sizes} quality={75} placeholder="blur" blurDataURL={before.blurDataURL} className="object-cover" />
+        <Image src={before.src} alt={before.alt} fill sizes={sizes} quality={75} className="object-cover" />
       </div>
 
       <span className="label pointer-events-none absolute top-4 left-4 rounded-sm bg-ink/80 px-2.5 py-1.5 text-ivory">{beforeLabel}</span>

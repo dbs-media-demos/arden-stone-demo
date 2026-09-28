@@ -75,8 +75,7 @@ export function WorkGallery({ items, categories }: { items: GalleryItem[]; categ
                         fill
                         sizes="(min-width: 1280px) 31vw, (min-width: 768px) 48vw, 100vw"
                         quality={75}
-                        placeholder="blur"
-                        blurDataURL={p.image.blurDataURL}
+                        preload={i === 0}
                         className="object-cover transition-transform duration-[1.4s] ease-[var(--ease-out-expo)] group-hover:scale-105"
                       />
                     </div>

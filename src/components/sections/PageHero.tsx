@@ -28,8 +28,6 @@ export function PageHero({ crumbs, eyebrow, title, lede, image, morph, aside, sh
       preload
       sizes="(min-width: 1680px) 1580px, 96vw"
       quality={75}
-      placeholder="blur"
-      blurDataURL={image.blurDataURL}
       className="object-cover"
     />
   );

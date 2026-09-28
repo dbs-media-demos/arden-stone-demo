@@ -12,7 +12,7 @@ export function MaterialMarquee({ items }: { items: { pic: Pic; name: string }[]
             <div className="relative aspect-square overflow-hidden rounded-full">
               <Image
                 src={m.pic.src}
-                alt={i >= items.length ? "" : m.pic.alt}
+                alt=""
                 fill
                 sizes="240px"
                 quality={60}

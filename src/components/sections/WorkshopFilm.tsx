@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGSAP, whenIdle } from "@/lib/gsap";
 
 /**
  * Workshop film. Opens from a small window to full bleed as you scroll.
@@ -15,13 +15,15 @@ export function WorkshopFilm({ children }: { children: React.ReactNode }) {
     const v = video.current;
     if (!v) return;
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-    if (prefersReducedMotion() || conn?.saveData) return;
+    // The poster always loads (lazily); the film itself only plays when motion is welcome.
+    const canPlay = !prefersReducedMotion() && !conn?.saveData;
     const io = new IntersectionObserver(
       ([e]) => {
-        if (e.isIntersecting) {
-          if (!v.src) v.src = "/video/workshop.mp4";
-          v.play().catch(() => {});
-        } else v.pause();
+        if (!e.isIntersecting) return v.pause();
+        if (!v.poster) v.poster = "/video/workshop-poster.jpg";
+        if (!canPlay) return;
+        if (!v.src) v.src = "/video/workshop.mp4";
+        v.play().catch(() => {});
       },
       { rootMargin: "200px 0px" },
     );
@@ -30,15 +32,23 @@ export function WorkshopFilm({ children }: { children: React.ReactNode }) {
   }, []);
 
   useGSAP(
-    () => {
+    (_ctx, contextSafe) => {
       if (prefersReducedMotion()) return;
-      const frame = root.current!.querySelector("[data-film]");
-      gsap.fromTo(
-        frame,
-        { clipPath: "inset(14% 22% 14% 22% round 4px)" },
-        { clipPath: "inset(0% 0% 0% 0% round 0px)", ease: "none", scrollTrigger: { trigger: root.current, start: "top 85%", end: "top top", scrub: true } },
+      return whenIdle(
+        contextSafe!(() => {
+          const frame = root.current!.querySelector("[data-film]");
+          gsap.fromTo(
+            frame,
+            { clipPath: "inset(14% 22% 14% 22% round 4px)" },
+            { clipPath: "inset(0% 0% 0% 0% round 0px)", ease: "none", scrollTrigger: { trigger: root.current, start: "top 85%", end: "top top", scrub: true } },
+          );
+          gsap.fromTo(
+            root.current!.querySelector("video"),
+            { scale: 1.25 },
+            { scale: 1, ease: "none", scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true } },
+          );
+        }),
       );
-      gsap.fromTo(root.current!.querySelector("video"), { scale: 1.25 }, { scale: 1, ease: "none", scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true } });
     },
     { scope: root },
   );
@@ -52,7 +62,6 @@ export function WorkshopFilm({ children }: { children: React.ReactNode }) {
           loop
           playsInline
           preload="none"
-          poster="/video/workshop-poster.jpg"
           aria-hidden
           className="absolute inset-0 h-full w-full object-cover"
         />

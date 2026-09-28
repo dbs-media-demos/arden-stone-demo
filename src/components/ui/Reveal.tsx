@@ -2,7 +2,8 @@
 
 import { useRef, type CSSProperties, type ElementType, type ReactNode } from "react";
 import clsx from "clsx";
-import { belowFold, gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGSAP } from "@/lib/gsap";
+import type { SplitText } from "gsap/SplitText";
+import { belowFold, gsap, prefersReducedMotion, ScrollTrigger, useGSAP, whenIdle } from "@/lib/gsap";
 
 /*
  * Scroll-driven reveals.
@@ -10,6 +11,14 @@ import { belowFold, gsap, prefersReducedMotion, ScrollTrigger, SplitText, useGSA
  * pure CSS so they paint at once. Everything else is hidden by JavaScript only while it is
  * still below the fold (opacity only), then animated in as it arrives.
  */
+
+// SplitText is only fetched once the page is idle and a split heading exists below the fold.
+let splitText: Promise<typeof SplitText> | null = null;
+const loadSplitText = () =>
+  (splitText ??= import("gsap/SplitText").then((m) => {
+    gsap.registerPlugin(m.SplitText);
+    return m.SplitText;
+  }));
 
 const delayStyle = (d: number) => ({ "--d": `${d}s` }) as CSSProperties;
 
@@ -28,30 +37,43 @@ export function SplitReveal({ children, as: Tag = "h2", className, delay = 0, im
   const ref = useRef<HTMLElement>(null);
 
   useGSAP(
-    () => {
+    (_ctx, contextSafe) => {
       const el = ref.current;
-      if (!el || immediate || prefersReducedMotion() || !belowFold(el)) return;
-      gsap.set(el, { opacity: 0 });
+      if (!el || immediate || prefersReducedMotion()) return;
       let split: SplitText | null = null;
-      const io = new IntersectionObserver(
-        ([entry]) => {
-          if (!entry.isIntersecting) return;
-          io.disconnect();
-          split = SplitText.create(el, {
-            type: "lines",
-            mask: "lines",
-            autoSplit: true,
-            onSplit(self) {
-              gsap.set(el, { opacity: 1 });
-              return gsap.from(self.lines, { yPercent: 118, rotate: 2, duration: 1.35, stagger, delay, ease: "expo.out" });
-            },
-          });
-        },
-        { rootMargin: "0px 0px -10% 0px" },
-      );
-      io.observe(el);
+      let io: IntersectionObserver | null = null;
+      let alive = true;
+      const run = contextSafe!((ST: typeof SplitText) => {
+        if (!alive) return;
+        split = ST.create(el, {
+          type: "lines",
+          mask: "lines",
+          autoSplit: true,
+          onSplit(self) {
+            gsap.set(el, { opacity: 1 });
+            return gsap.from(self.lines, { yPercent: 118, rotate: 2, duration: 1.35, stagger, delay, ease: "expo.out" });
+          },
+        });
+      });
+      const setup = contextSafe!(() => {
+        if (!belowFold(el)) return;
+        gsap.set(el, { opacity: 0 });
+        const loading = loadSplitText();
+        io = new IntersectionObserver(
+          ([entry]) => {
+            if (!entry.isIntersecting) return;
+            io?.disconnect();
+            loading.then(run, () => gsap.set(el, { opacity: 1 }));
+          },
+          { rootMargin: "0px 0px -10% 0px" },
+        );
+        io.observe(el);
+      });
+      const cancel = whenIdle(setup);
       return () => {
-        io.disconnect();
+        alive = false;
+        cancel();
+        io?.disconnect();
         split?.revert();
       };
     },
@@ -81,17 +103,22 @@ export function Reveal({ children, as: Tag = "div", className, delay = 0, y = 36
   const ref = useRef<HTMLElement>(null);
 
   useGSAP(
-    () => {
+    (_ctx, contextSafe) => {
       const el = ref.current;
-      if (!el || immediate || prefersReducedMotion() || !belowFold(el)) return;
-      const targets = stagger ? Array.from(el.children) : [el];
-      gsap.set(targets, { opacity: 0, y });
-      ScrollTrigger.create({
-        trigger: el,
-        start: "top 90%",
-        once: true,
-        onEnter: () => gsap.to(targets, { opacity: 1, y: 0, duration: 1.25, delay, stagger: stagger ?? 0, ease: "expo.out", clearProps: "transform" }),
-      });
+      if (!el || immediate || prefersReducedMotion()) return;
+      return whenIdle(
+        contextSafe!(() => {
+          if (!belowFold(el)) return;
+          const targets = stagger ? Array.from(el.children) : [el];
+          gsap.set(targets, { opacity: 0, y });
+          ScrollTrigger.create({
+            trigger: el,
+            start: "top 90%",
+            once: true,
+            onEnter: () => gsap.to(targets, { opacity: 1, y: 0, duration: 1.25, delay, stagger: stagger ?? 0, ease: "expo.out", clearProps: "transform" }),
+          });
+        }),
+      );
     },
     { scope: ref },
   );
@@ -108,15 +135,19 @@ export function ScrubWords({ text, className, as: Tag = "p" }: { text: string; c
   const ref = useRef<HTMLElement>(null);
 
   useGSAP(
-    () => {
+    (_ctx, contextSafe) => {
       const el = ref.current;
       if (!el || prefersReducedMotion()) return;
-      const words = el.querySelectorAll<HTMLElement>("[data-w]");
-      // Starts around 3:1 contrast so the large text stays readable before scrolling.
-      gsap.fromTo(
-        words,
-        { opacity: 0.32 },
-        { opacity: 1, ease: "none", stagger: 0.1, scrollTrigger: { trigger: el, start: "top 78%", end: "bottom 42%", scrub: 0.5 } },
+      return whenIdle(
+        contextSafe!(() => {
+          const words = el.querySelectorAll<HTMLElement>("[data-w]:not(.italic)");
+          // Starts at 0.62 opacity so even the faded words keep 4.5:1 contrast so the large text stays readable before scrolling.
+          gsap.fromTo(
+            words,
+            { opacity: 0.62 },
+            { opacity: 1, ease: "none", stagger: 0.1, scrollTrigger: { trigger: el, start: "top 78%", end: "bottom 42%", scrub: 0.5 } },
+          );
+        }),
       );
     },
     { scope: ref },
@@ -150,23 +181,27 @@ export function Parallax({
   const ref = useRef<HTMLDivElement>(null);
 
   useGSAP(
-    () => {
+    (_ctx, contextSafe) => {
       const el = ref.current;
       const inner = el?.firstElementChild as HTMLElement | null;
       if (!el || !inner || prefersReducedMotion()) return;
-      gsap.set(inner, { scale: 1 + amount / 100 });
-      gsap.fromTo(
-        inner,
-        { yPercent: -amount / 2 },
-        { yPercent: amount / 2, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } },
+      return whenIdle(
+        contextSafe!(() => {
+          gsap.set(inner, { scale: 1 + amount / 100 });
+          gsap.fromTo(
+            inner,
+            { yPercent: -amount / 2 },
+            { yPercent: amount / 2, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } },
+          );
+          if (reveal && belowFold(el)) {
+            gsap.fromTo(
+              el,
+              { clipPath: "inset(14% 10% 14% 10%)" },
+              { clipPath: "inset(0% 0% 0% 0%)", duration: 1.7, ease: "expo.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } },
+            );
+          }
+        }),
       );
-      if (reveal && belowFold(el)) {
-        gsap.fromTo(
-          el,
-          { clipPath: "inset(14% 10% 14% 10%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", duration: 1.7, ease: "expo.out", scrollTrigger: { trigger: el, start: "top 88%", once: true } },
-        );
-      }
     },
     { scope: ref },
   );

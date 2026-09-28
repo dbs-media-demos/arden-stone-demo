@@ -74,8 +74,6 @@ export function ProjectReel({ items, intro }: { items: ReelItem[]; intro: ReactN
                     fill
                     sizes="(min-width: 1024px) 46vw, 82vw"
                     quality={75}
-                    placeholder="blur"
-                    blurDataURL={p.image.blurDataURL}
                     className="object-cover transition-transform duration-[1.4s] ease-[var(--ease-out-expo)] group-hover:scale-105"
                   />
                 </div>

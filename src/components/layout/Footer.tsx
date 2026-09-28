@@ -105,7 +105,11 @@ export function Footer() {
         </div>
 
         <div aria-hidden className="pointer-events-none flex items-end justify-between gap-6 pt-4 text-ivory/[0.07] select-none">
-          <span className="font-display text-[19vw] leading-[0.78] tracking-[-0.04em] whitespace-nowrap">Arden &amp; Stone</span>
+          <svg viewBox="0 0 1000 150" className="h-auto w-full min-w-0 flex-1 overflow-visible" aria-hidden focusable="false">
+            <text x="0" y="128" fill="currentColor" fontFamily="var(--font-cormorant)" fontSize="172" letterSpacing="-6" textLength="1000" lengthAdjust="spacingAndGlyphs">
+              Arden &amp; Stone
+            </text>
+          </svg>
           <Mark className="mb-[2vw] hidden h-[9vw] w-[9vw] shrink-0 md:block [--mark-accent:currentColor] [--ivory:var(--ink)]" />
         </div>
       </div>

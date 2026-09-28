@@ -7,11 +7,10 @@ export type Pic = {
   src: string;
   width: number;
   height: number;
-  blurDataURL: string;
   alt: string;
 };
 
 export function pic(key: ImageKey, alt: string): Pic {
-  const [width, height, blurDataURL] = IMAGE_META[key];
-  return { src: `/images/${key}.jpg`, width, height, blurDataURL, alt };
+  const [width, height] = IMAGE_META[key];
+  return { src: `/images/${key}.jpg`, width, height, alt };
 }

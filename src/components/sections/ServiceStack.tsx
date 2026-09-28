@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { gsap, prefersReducedMotion, useGSAP, whenIdle } from "@/lib/gsap";
 import type { Pic } from "@/lib/images";
 import { Arrow } from "@/components/ui/Button";
 
@@ -14,23 +14,27 @@ export function ServiceStack({ items }: { items: StackItem[] }) {
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
-    () => {
+    (_ctx, contextSafe) => {
       if (prefersReducedMotion()) return;
-      const cards = gsap.utils.toArray<HTMLElement>("[data-card]", root.current);
-      cards.forEach((card, i) => {
-        const next = cards[i + 1];
-        if (!next) return;
-        gsap.to(card.querySelector("[data-card-inner]"), {
-          scale: 0.92,
-          ease: "none",
-          scrollTrigger: { trigger: next, start: "top bottom", end: "top top+=120", scrub: true },
-        });
-        gsap.fromTo(
-          card.querySelector("[data-card-shade]"),
-          { opacity: 0 },
-          { opacity: 0.55, ease: "none", scrollTrigger: { trigger: next, start: "top bottom", end: "top top+=120", scrub: true } },
-        );
-      });
+      return whenIdle(
+        contextSafe!(() => {
+          const cards = gsap.utils.toArray<HTMLElement>("[data-card]", root.current);
+          cards.forEach((card, i) => {
+            const next = cards[i + 1];
+            if (!next) return;
+            gsap.to(card.querySelector("[data-card-inner]"), {
+              scale: 0.92,
+              ease: "none",
+              scrollTrigger: { trigger: next, start: "top bottom", end: "top top+=120", scrub: true },
+            });
+            gsap.fromTo(
+              card.querySelector("[data-card-shade]"),
+              { opacity: 0 },
+              { opacity: 0.55, ease: "none", scrollTrigger: { trigger: next, start: "top bottom", end: "top top+=120", scrub: true } },
+            );
+          });
+        }),
+      );
     },
     { scope: root },
   );
@@ -74,8 +78,6 @@ export function ServiceStack({ items }: { items: StackItem[] }) {
                   fill
                   sizes="(min-width: 768px) 58vw, 100vw"
                   quality={75}
-                  placeholder="blur"
-                  blurDataURL={s.image.blurDataURL}
                   className="object-cover transition-transform duration-[1.6s] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]"
                 />
               </div>

@@ -14,13 +14,13 @@ import { noindex, site, siteUrl } from "@/lib/site";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400"],
   style: ["normal", "italic"],
   variable: "--font-cormorant",
   display: "swap",
 });
 const manrope = Manrope({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-manrope", display: "swap" });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-plex-mono", display: "swap" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-plex-mono", display: "swap", preload: false });
 
 const defaultTitle = "Arden & Stone | Dallas Design-Build Renovation Studio";
 

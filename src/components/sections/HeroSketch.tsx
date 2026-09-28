@@ -22,6 +22,8 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
   const [index, setIndex] = useState(0);
   const [extra, setExtra] = useState(false); // other slides mount after the first has painted
   const [paused, setPaused] = useState(false);
+  // Rotation starts on the visitor's first interaction, so the first room stays the LCP.
+  const [armed, setArmed] = useState(false);
   const busy = useRef(false);
 
   // Mount the other rooms once the browser is idle, so they never compete with the LCP.
@@ -61,13 +63,20 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
     setIndex(next);
   };
 
+  useEffect(() => {
+    const arm = () => setArmed(true);
+    const events = ["pointermove", "pointerdown", "scroll", "keydown", "wheel"] as const;
+    events.forEach((e) => window.addEventListener(e, arm, { once: true, passive: true }));
+    return () => events.forEach((e) => window.removeEventListener(e, arm));
+  }, []);
+
   // Auto-advance.
   useEffect(() => {
-    if (!extra || paused || prefersReducedMotion()) return;
+    if (!extra || !armed || paused || prefersReducedMotion()) return;
     const id = window.setTimeout(() => goTo((index + 1) % slides.length), index === 0 ? SLIDE_MS + 1400 : SLIDE_MS);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extra, paused, index, slides.length]);
+  }, [extra, armed, paused, index, slides.length]);
 
   // Pause when the tab is hidden.
   useEffect(() => {
@@ -153,7 +162,7 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
                     fill
                     sizes="100vw"
                     quality={60}
-                    loading={i === 0 ? "eager" : "lazy"}
+                    preload={i === 0}
                     className="object-cover"
                     style={{ objectPosition: s.position }}
                   />
@@ -165,9 +174,8 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
                     fill
                     sizes="100vw"
                     quality={75}
-                    preload={i === 0}
-                    placeholder="blur"
-                    blurDataURL={s.photo.blurDataURL}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    fetchPriority={i === 0 ? "high" : "auto"}
                     className="object-cover"
                     style={{ objectPosition: s.position }}
                   />
@@ -207,7 +215,7 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
                       <span
                         key={`${index}-${paused}`}
                         className="absolute inset-x-0 h-px origin-left bg-ink"
-                        style={{ animation: extra && !paused ? `bar-fill ${(index === 0 ? SLIDE_MS + 1400 : SLIDE_MS) / 1000}s linear both` : undefined }}
+                        style={{ animation: extra && armed && !paused ? `bar-fill ${(index === 0 ? SLIDE_MS + 1400 : SLIDE_MS) / 1000}s linear both` : undefined }}
                       />
                     )}
                   </button>

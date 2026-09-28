@@ -13,7 +13,7 @@ type Props = {
   style?: React.CSSProperties;
 };
 
-/** next/image with the blur placeholder and correct intrinsic size baked in. */
+/** next/image with the correct intrinsic size baked in. Frames supply a paper-colour background while loading. */
 export function Img({ pic, sizes, className, fill = true, preload, quality = 75, style }: Props) {
   return (
     <Image
@@ -21,8 +21,6 @@ export function Img({ pic, sizes, className, fill = true, preload, quality = 75,
       alt={pic.alt}
       sizes={sizes}
       quality={quality}
-      placeholder="blur"
-      blurDataURL={pic.blurDataURL}
       preload={preload}
       {...(fill ? { fill: true } : { width: pic.width, height: pic.height })}
       className={clsx(fill && "object-cover", className)}
