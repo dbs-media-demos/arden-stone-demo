@@ -4,7 +4,7 @@
 - Market / city: US – Dallas–Fort Worth, TX (Highland Park, University Park, Preston Hollow, Lakewood, Southlake, Fort Worth)
 - Languages: en
 - Live URL: https://arden-stone-demo.vercel.app
-- Repo: local only (git on `main`; tag `v1-london` = the old London version). Not pushed to GitHub yet.
+- Repo: https://github.com/dbs-media-demos/arden-stone-demo (public, branch main)
 - Folder: DBS Media Portfolio/Demo Websites/arden-stone
 - Stack: Next.js 16.3.6, React 19.2.8, Tailwind v4, GSAP 3.15 (ScrollTrigger, SplitText, Flip), Lenis
 - Palette: #F8F6F2 ivory · #F1EDE6 paper · #E5E1DC stone · #1D1916 ink · #986B3E bronze · #C49764 bronze-light · #7E552C bronze (text)   Fonts: Cormorant Garamond, Manrope, IBM Plex Mono
