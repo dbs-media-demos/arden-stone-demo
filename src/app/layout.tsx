@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   description: site.description,
   applicationName: site.name,
   authors: [{ name: site.name }],
-  creator: "DBS Media",
+  creator: site.agency,
   formatDetection: { telephone: false },
   alternates: { canonical: "/" },
   openGraph: {

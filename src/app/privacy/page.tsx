@@ -21,7 +21,7 @@ const SECTIONS: [string, string[]][] = [
   [
     "About this site",
     [
-      `This website is a concept design by DBS Media for a fictional studio, ${site.name}. The contact form does not send or store anything, and no account, tracking or advertising cookies are used.`,
+      `This website is a concept design by ${site.agency} for a fictional studio, ${site.name}. The contact form does not send or store anything, and no account, tracking or advertising cookies are used.`,
       "The policy below shows the kind of plain-English privacy notice we write for real clients.",
     ],
   ],

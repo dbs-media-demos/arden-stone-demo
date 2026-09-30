@@ -1,4 +1,4 @@
-/** Arden & Stone: a fictional Dallas design-build studio (a DBS Media concept site). */
+/** Arden & Stone: a fictional Dallas design-build studio (a Scale by Noon concept site). */
 
 export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://arden-stone-demo.vercel.app").replace(/\/$/, "");
 
@@ -42,7 +42,8 @@ export const site = {
     pinterest: "https://pinterest.com/",
     houzz: "https://houzz.com/",
   },
-  dbs: "https://dbs-media.com",
+  agency: "Scale by Noon",
+  agencyUrl: "https://scale-by-noon.vercel.app",
 } as const;
 
 export const absoluteUrl = (path = "/") => `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;

@@ -98,8 +98,8 @@ export function Footer() {
             <Link href="/privacy" className="link-draw hover:text-ivory">
               Privacy
             </Link>
-            <a href={site.dbs} target="_blank" rel="noopener" className="link-draw hover:text-ivory">
-              Design &amp; development: DBS Media
+            <a href={site.agencyUrl} target="_blank" rel="noopener" className="link-draw hover:text-ivory">
+              Design &amp; development: {site.agency}
             </a>
           </div>
         </div>
