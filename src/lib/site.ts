@@ -43,7 +43,7 @@ export const site = {
     houzz: "https://houzz.com/",
   },
   agency: "Scale by Noon",
-  agencyUrl: "https://scale-by-noon.vercel.app",
+  agencyUrl: "https://www.scalebynoon.com",
 } as const;
 
 export const absoluteUrl = (path = "/") => `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;

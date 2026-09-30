@@ -1,6 +1,6 @@
 # Arden & Stone (Scale by Noon demo)
 
-- Niche: Home renovation / design-build   (matches scale-by-noon.vercel.app industry id: none yet. Closest are `professional-services` or a future `renovation` id)
+- Niche: Home renovation / design-build   (matches www.scalebynoon.com industry id: none yet. Closest are `professional-services` or a future `renovation` id)
 - Market / city: US – Dallas–Fort Worth, TX (Highland Park, University Park, Preston Hollow, Lakewood, Southlake, Fort Worth)
 - Languages: en
 - Live URL: https://arden-stone-demo.vercel.app
