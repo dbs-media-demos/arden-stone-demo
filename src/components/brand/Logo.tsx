@@ -1,4 +1,7 @@
+"use client";
+
 import clsx from "clsx";
+import { useBiz } from "@/components/preview/BizContext";
 
 /** The mark: an arched doorway (Arden) standing on a dressed stone block (Stone). */
 export function Mark({ className, title }: { className?: string; title?: string }) {
@@ -14,12 +17,19 @@ export function Mark({ className, title }: { className?: string; title?: string 
 }
 
 export function Logo({ className, compact }: { className?: string; compact?: boolean }) {
+  const biz = useBiz();
   return (
     <span className={clsx("inline-flex items-center gap-2.5", className)}>
       <Mark className="h-8 w-8 shrink-0" />
       {!compact && (
         <span className="font-display text-[1.45rem] leading-none tracking-[0.02em] whitespace-nowrap">
-          Arden <em className="italic text-bronze">&amp;</em> Stone
+          {biz.preview ? (
+            <span className="block max-w-[12rem] truncate pb-0.5 sm:max-w-[18rem]">{biz.shortName}</span>
+          ) : (
+            <>
+              Arden <em className="italic text-bronze">&amp;</em> Stone
+            </>
+          )}
         </span>
       )}
     </span>

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { PageShell } from "@/components/layout/PageShell";
 import { AreaMap } from "@/components/sections/AreaMap";
 import { BeforeAfter } from "@/components/sections/BeforeAfter";
@@ -13,7 +14,6 @@ import { RatingPill, ScaleBar, SectionHead } from "@/components/ui/Bits";
 import { Button, TextLink } from "@/components/ui/Button";
 import { Counter } from "@/components/ui/Counter";
 import { FaqList } from "@/components/ui/FaqList";
-import { JsonLd } from "@/components/ui/JsonLd";
 import { OpenBadge } from "@/components/ui/OpenBadge";
 import { Lines, Reveal, ScrubWords, SplitReveal } from "@/components/ui/Reveal";
 import { AREAS } from "@/data/areas";
@@ -21,19 +21,9 @@ import { CATEGORIES, PROJECTS, projectBySlug } from "@/data/projects";
 import { SERVICES } from "@/data/services";
 import { FAQS, MATERIALS, STAGES, STATS, TRUST } from "@/data/studio";
 import { pic } from "@/lib/images";
-import { faqSchema, graph } from "@/lib/schema";
-import { buildMetadata } from "@/lib/seo";
-import { site } from "@/lib/site";
-
-export const metadata = buildMetadata({
-  title: "Arden & Stone | Dallas Design-Build Renovation Studio",
-  absoluteTitle: true,
-  description:
-    "Design-build home renovation in Dallas: whole homes, kitchens, primary baths, additions and historic restorations in Highland Park, Preston Hollow and across DFW. One team from first sketch to handover.",
-  path: "/",
-  eyebrow: "Dallas design-build studio",
-  image: "/images/hero/kitchen.jpg",
-});
+import { PreviewMap } from "@/components/preview/PreviewMap";
+import { defaultBiz } from "@/lib/biz";
+import { L, openDays, telOf, type Biz } from "@/lib/biz-core";
 
 const SLIDES: HeroSlide[] = [
   {
@@ -60,46 +50,88 @@ const SLIDES: HeroSlide[] = [
   },
 ];
 
-export default function HomePage() {
+/** On previews: no projects named after Dallas neighbourhoods, and FAQs that hold anywhere. */
+const PREVIEW_PROJECT_SKIP = ["preston-hollow-modern", "the-m-streets-tudor", "westover-hills-residence"];
+const PREVIEW_FAQS = [0, 3, 5, 7, 9];
+
+export const homeFaqs = FAQS.slice(0, 5);
+
+/**
+ * The homepage sections. The concept site renders them as they are; a personalised preview
+ * (/for/<token>) passes a real business: its name, phone, hours, rating and a map of its address
+ * replace Arden & Stone's, and Dallas places, prices and credentials step aside. Serbian previews
+ * are translated (i18n/sr; hero and statement in code) and skip the dollar cost estimator.
+ */
+export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; children?: ReactNode }) {
   const linen = projectBySlug("the-linen-kitchen")!;
   const catLabel = (id: string) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
+  const sr = biz.lang === "sr";
+  const slides = biz.preview ? SLIDES.map((s) => ({ ...s, place: biz.area })) : SLIDES;
+  const days = openDays(biz);
+  const stats = biz.preview
+    ? [
+        ...(biz.rating ? [{ value: biz.rating.count, suffix: "", label: L(biz, "Google reviews", "Google recenzija") }] : []),
+        ...(days ? [{ value: days, suffix: "", label: L(biz, "Days a week we pick up", "Dana nedeljno radimo") }] : []),
+        { value: 1, suffix: "", label: L(biz, "Team, sketch to keys", "Tim, od skice do ključeva") },
+        { value: 10, suffix: "", label: L(biz, "Year workmanship warranty", "Godina garancije na izradu") },
+      ]
+    : STATS;
+  const projects = biz.preview ? PROJECTS.filter((p) => !PREVIEW_PROJECT_SKIP.includes(p.slug)) : PROJECTS;
+  const faqs = biz.preview ? PREVIEW_FAQS.map((i) => FAQS[i]) : homeFaqs;
 
   return (
     <PageShell>
-      <JsonLd data={graph(faqSchema(FAQS.slice(0, 5)))} />
+      {children}
 
       {/* ───────── Hero ───────── */}
       <HeroSketch
-        slides={SLIDES}
+        slides={slides}
         footer={
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line py-5 lg:border-0 lg:py-6">
             <RatingPill />
             <OpenBadge className="text-muted" />
-            <a href={site.phoneHref} className="label link-draw tabular">
-              {site.phone}
-            </a>
+            {biz.phone && (
+              <a href={telOf(biz)} className="label link-draw tabular">
+                {biz.phoneDisplay}
+              </a>
+            )}
           </div>
         }
       >
         <h1>
           <span className="eyebrow anim-fade mb-4 md:mb-7" style={{ "--d": "0.1s" } as React.CSSProperties}>
-            Dallas design-build renovation studio
+            {biz.preview ? L(biz, `Design-build renovation studio · ${biz.area}`, `Projektovanje i renoviranje · ${biz.area}`) : "Dallas design-build renovation studio"}
           </span>
           <Lines
             className="mt-3 font-display text-[clamp(3.1rem,6.1vw,7.4rem)] md:mt-6 leading-[0.92] tracking-[-0.03em]"
             delay={0.15}
-            lines={[
-              "Drawn by hand.",
-              "Built by the",
-              <span key="l3">
-                same <em className="italic-accent">hands.</em>
-              </span>,
-            ]}
+            lines={
+              sr
+                ? [
+                    "Nacrtano rukom.",
+                    "Izgrađeno",
+                    <span key="l3">
+                      istim <em className="italic-accent">rukama.</em>
+                    </span>,
+                  ]
+                : [
+                    "Drawn by hand.",
+                    "Built by the",
+                    <span key="l3">
+                      same <em className="italic-accent">hands.</em>
+                    </span>,
+                  ]
+            }
           />
         </h1>
         <p className="lede anim-fade mt-5 max-w-md max-md:text-base md:mt-8" style={{ "--d": "0.5s" } as React.CSSProperties}>
-          Architects, designers and makers under one roof. We renovate homes across Highland Park, Preston Hollow and DFW, from the first pencil line to the final
-          coat of wax.
+          {biz.preview
+            ? L(
+                biz,
+                `Architects, designers and makers under one roof. We renovate homes across ${biz.area}, from the first pencil line to the final coat of wax.`,
+                "Projektanti, dizajneri i majstori pod jednim krovom. Renoviramo domove od prve linije olovkom do poslednjeg sloja voska.",
+              )
+            : "Architects, designers and makers under one roof. We renovate homes across Highland Park, Preston Hollow and DFW, from the first pencil line to the final coat of wax."}
         </p>
         <div className="anim-fade mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 md:mt-9" style={{ "--d": "0.65s" } as React.CSSProperties}>
           <Button href="/contact">Book a consultation</Button>
@@ -119,10 +151,18 @@ export default function HomePage() {
           <div className="lg:col-span-9">
             <ScrubWords
               className="display-m text-pretty"
-              text="We draw your home, build it in our own Design District workshop, and hand you the keys to a house that feels as if it had *always *been *this *way. One team, one contract, one number to call."
+              text={
+                biz.preview
+                  ? L(
+                      biz,
+                      "We draw your home, build it in our own workshop, and hand you the keys to a house that feels as if it had *always *been *this *way. One team, one contract, one number to call.",
+                      "Nacrtamo vaš dom, izradimo ga u sopstvenoj radionici i predamo vam ključeve kuće koja deluje kao da je *oduvek *bila *takva. Jedan tim, jedan ugovor, jedan broj telefona.",
+                    )
+                  : "We draw your home, build it in our own Design District workshop, and hand you the keys to a house that feels as if it had *always *been *this *way. One team, one contract, one number to call."
+              }
             />
             <dl className="mt-20 grid grid-cols-2 gap-x-6 gap-y-12 border-t border-line pt-10 md:grid-cols-4">
-              {STATS.map((s) => (
+              {stats.map((s) => (
                 <div key={s.label}>
                   <dd className="font-display text-[clamp(3rem,6vw,5.5rem)] leading-none tabular">
                     <Counter value={s.value} suffix={s.suffix} />
@@ -140,7 +180,7 @@ export default function HomePage() {
         <div className="shell">
           <SectionHead
             align="split"
-            eyebrow="Before & after · University Park"
+            eyebrow={biz.preview ? L(biz, "Before & after", "Pre i posle") : "Before & after · University Park"}
             title={
               <SplitReveal id="ba-title" className="display-l">
                 A 1984 galley, <em className="italic-accent">set free.</em>
@@ -161,7 +201,7 @@ export default function HomePage() {
           </Reveal>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
             <p className="label text-faint">
-              {linen.title} · {linen.duration} · {linen.budget}
+              {biz.preview ? linen.title : `${linen.title} · ${linen.duration} · ${linen.budget}`}
             </p>
             <TextLink href={`/work/${linen.slug}`}>Read the project</TextLink>
           </div>
@@ -188,7 +228,7 @@ export default function HomePage() {
               sheet: s.sheet,
               title: s.title,
               lede: s.lede,
-              price: s.price,
+              price: sr ? "Po proceni" : s.price,
               duration: s.duration,
               image: pic(s.hero.key, s.hero.alt),
             }))}
@@ -198,10 +238,10 @@ export default function HomePage() {
 
       {/* ───────── Selected work (horizontal) ───────── */}
       <ProjectReel
-        items={PROJECTS.map((p) => ({
+        items={projects.map((p) => ({
           slug: p.slug,
           title: p.title,
-          area: p.area,
+          area: biz.preview ? biz.area : p.area,
           year: p.year,
           tag: catLabel(p.categories[0]),
           image: pic(p.hero.key, p.hero.alt),
@@ -212,7 +252,9 @@ export default function HomePage() {
             <h2 id="reel-title" className="display-xl">
               Homes we&rsquo;ve <em className="italic-accent">drawn</em> and built.
             </h2>
-            <p className="lede mt-6 max-w-sm">Nine recent projects across Dallas and Fort Worth. Scroll sideways through the sheets.</p>
+            <p className="lede mt-6 max-w-sm">
+              {biz.preview ? L(biz, "Recent projects. Scroll sideways through the sheets.", "Nedavni projekti. Prelistajte listove u stranu.") : "Nine recent projects across Dallas and Fort Worth. Scroll sideways through the sheets."}
+            </p>
             <div className="mt-8">
               <TextLink href="/work">All projects</TextLink>
             </div>
@@ -240,9 +282,23 @@ export default function HomePage() {
 
       {/* ───────── Workshop film ───────── */}
       <WorkshopFilm>
-        <p className="eyebrow mb-6">The workshop · Design District</p>
+        <p className="eyebrow mb-6">{biz.preview ? L(biz, "The workshop", "Radionica") : "The workshop · Design District"}</p>
         <p className="display-l max-w-4xl">
-          Every cabinet, door and stair is made <em className="italic-accent">twelve minutes</em> from your house.
+          {biz.preview ? (
+            sr ? (
+              <>
+                Svaki ormarić, vrata i stepenište pravimo <em className="italic-accent">u svojoj</em> radionici.
+              </>
+            ) : (
+              <>
+                Every cabinet, door and stair is made <em className="italic-accent">in our own</em> workshop.
+              </>
+            )
+          ) : (
+            <>
+              Every cabinet, door and stair is made <em className="italic-accent">twelve minutes</em> from your house.
+            </>
+          )}
         </p>
       </WorkshopFilm>
 
@@ -257,28 +313,32 @@ export default function HomePage() {
         <MaterialMarquee items={MATERIALS.map((m) => ({ pic: pic(m.key, m.name), name: m.name }))} />
       </section>
 
-      {/* ───────── Estimator ───────── */}
-      <section className="theme-stone py-24 md:py-36" aria-labelledby="estimate-title">
-        <div className="shell">
-          <SectionHead
-            align="split"
-            eyebrow="Cost estimator"
-            title={
-              <SplitReveal id="estimate-title" className="display-xl">
-                What will it <em className="italic-accent">cost?</em>
-              </SplitReveal>
-            }
-          >
-            An honest range in ten seconds, based on what Dallas renovations really cost in 2026.{" "}
-            <TextLink href="/estimate" className="mt-4 text-fg">
-              Full estimator
-            </TextLink>
-          </SectionHead>
-          <div className="mt-16">
-            <Estimator compact />
-          </div>
-        </div>
-      </section>
+      {!sr && (
+        <>
+          {/* ───────── Estimator ───────── */}
+          <section className="theme-stone py-24 md:py-36" aria-labelledby="estimate-title">
+            <div className="shell">
+              <SectionHead
+                align="split"
+                eyebrow="Cost estimator"
+                title={
+                  <SplitReveal id="estimate-title" className="display-xl">
+                    What will it <em className="italic-accent">cost?</em>
+                  </SplitReveal>
+                }
+              >
+                An honest range in ten seconds, based on what Dallas renovations really cost in 2026.{" "}
+                <TextLink href="/estimate" className="mt-4 text-fg">
+                  Full estimator
+                </TextLink>
+              </SectionHead>
+              <div className="mt-16">
+                <Estimator compact />
+              </div>
+            </div>
+          </section>
+        </>
+      )}
 
       {/* ───────── Reviews ───────── */}
       <section className="py-24 md:py-36" aria-labelledby="reviews-title">
@@ -288,10 +348,10 @@ export default function HomePage() {
             Judged at twelve months, <em className="italic-accent">not at handover.</em>
           </SplitReveal>
         </div>
-        <ReviewsRow />
+        <ReviewsRow biz={biz} />
         <div className="shell mt-16">
           <ul className="flex flex-wrap gap-x-8 gap-y-3 border-t border-line pt-8">
-            {TRUST.map((t) => (
+            {(biz.preview ? [] : TRUST).map((t) => (
               <li key={t} className="label text-muted">
                 {t}
               </li>
@@ -300,26 +360,32 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ───────── Areas ───────── */}
-      <section className="theme-stone py-24 md:py-36" aria-labelledby="areas-title">
-        <div className="shell grid gap-14 lg:grid-cols-12">
-          <div className="lg:col-span-4">
-            <p className="eyebrow mb-6">Where we work</p>
-            <SplitReveal id="areas-title" className="display-l">
-              Dallas, the Park Cities <em className="italic-accent">&amp; beyond.</em>
-            </SplitReveal>
-            <p className="lede mt-6">
-              A dedicated site lead on every job, never more than forty minutes from the workshop. We know the review boards, the inspectors and the soil.
-            </p>
-            <div className="mt-8">
-              <TextLink href="/areas">Service areas</TextLink>
+      {biz.preview ? (
+        <PreviewMap biz={biz} />
+      ) : (
+        <>
+          {/* ───────── Areas ───────── */}
+          <section className="theme-stone py-24 md:py-36" aria-labelledby="areas-title">
+            <div className="shell grid gap-14 lg:grid-cols-12">
+              <div className="lg:col-span-4">
+                <p className="eyebrow mb-6">Where we work</p>
+                <SplitReveal id="areas-title" className="display-l">
+                  Dallas, the Park Cities <em className="italic-accent">&amp; beyond.</em>
+                </SplitReveal>
+                <p className="lede mt-6">
+                  A dedicated site lead on every job, never more than forty minutes from the workshop. We know the review boards, the inspectors and the soil.
+                </p>
+                <div className="mt-8">
+                  <TextLink href="/areas">Service areas</TextLink>
+                </div>
+              </div>
+              <div className="lg:col-span-8">
+                <AreaMap pins={AREAS.map((a) => ({ slug: a.slug, short: a.short, name: a.name, x: a.map.x, y: a.map.y, drive: a.drive }))} />
+              </div>
             </div>
-          </div>
-          <div className="lg:col-span-8">
-            <AreaMap pins={AREAS.map((a) => ({ slug: a.slug, short: a.short, name: a.name, x: a.map.x, y: a.map.y, drive: a.drive }))} />
-          </div>
-        </div>
-      </section>
+          </section>
+        </>
+      )}
 
       {/* ───────── FAQ ───────── */}
       <section className="shell grid gap-14 py-24 md:py-36 lg:grid-cols-12" aria-labelledby="faq-title">
@@ -333,7 +399,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="lg:col-span-8">
-          <FaqList items={FAQS.slice(0, 5)} />
+          <FaqList items={faqs} />
         </div>
       </section>
     </PageShell>

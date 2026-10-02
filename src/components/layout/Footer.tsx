@@ -8,6 +8,8 @@ import { AREAS } from "@/data/areas";
 import { SERVICES } from "@/data/services";
 import { pic, type ImageKey } from "@/lib/images";
 import { site } from "@/lib/site";
+import { defaultBiz } from "@/lib/biz";
+import { L, telOf, type Biz } from "@/lib/biz-core";
 
 const TRAIL: ImageKey[] = [
   "kitchen/warm-white",
@@ -22,7 +24,7 @@ const TRAIL: ImageKey[] = [
   "living/terracotta",
 ];
 
-export function Footer() {
+export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
   const year = new Date().getFullYear();
   return (
     <footer className="theme-ink relative overflow-hidden pb-24 md:pb-10">
@@ -35,8 +37,8 @@ export function Footer() {
           <div className="mt-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-4">
               <Button href="/contact">Book a consultation</Button>
-              <Button href={site.phoneHref} variant="line" arrow={false}>
-                {site.phone}
+              <Button href={telOf(biz)!} variant="line" arrow={false}>
+                {biz.phoneDisplay}
               </Button>
             </div>
             <p className="max-w-sm text-muted">The first visit is free, takes about ninety minutes, and you will leave with an honest budget range.</p>
@@ -49,20 +51,28 @@ export function Footer() {
         <div className="grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <address className="not-italic">
-              <p className="font-display text-3xl leading-tight">
-                {site.address.street}
-                <br />
-                {site.address.locality}, {site.address.region} {site.address.postalCode}
-              </p>
-              <p className="label mt-3 text-faint">{site.address.district}</p>
+              {biz.preview ? (
+                <p className="font-display text-3xl leading-tight">{biz.address.full}</p>
+              ) : (
+                <>
+                  <p className="font-display text-3xl leading-tight">
+                    {site.address.street}
+                    <br />
+                    {site.address.locality}, {site.address.region} {site.address.postalCode}
+                  </p>
+                  <p className="label mt-3 text-faint">{site.address.district}</p>
+                </>
+              )}
             </address>
             <div className="mt-8 grid gap-3">
-              <a href={site.phoneHref} className="link-draw w-fit tabular text-lg">
-                {site.phone}
+              <a href={telOf(biz)!} className="link-draw w-fit tabular text-lg">
+                {biz.phoneDisplay}
               </a>
-              <a href={`mailto:${site.email}`} className="link-draw w-fit">
-                {site.email}
-              </a>
+              {!biz.preview && (
+                <a href={`mailto:${site.email}`} className="link-draw w-fit">
+                  {site.email}
+                </a>
+              )}
               <OpenBadge className="mt-2 text-muted" />
               <RatingPill className="mt-1 text-ivory" />
             </div>
@@ -85,14 +95,16 @@ export function Footer() {
           <FooterCol
             title="Areas"
             className="lg:col-span-3"
-            links={[{ href: "/areas", label: "All service areas" }, ...AREAS.map((a) => ({ href: `/areas/${a.slug}`, label: a.name }))]}
+            links={biz.preview ? [{ href: "/areas", label: biz.area }] : [{ href: "/areas", label: "All service areas" }, ...AREAS.map((a) => ({ href: `/areas/${a.slug}`, label: a.name }))]}
           />
         </div>
 
         <div className="hairline" />
         <div className="flex flex-col gap-4 py-8 text-sm text-faint md:flex-row md:items-center md:justify-between">
           <p>
-            © {year} {site.legalName}. A fictional studio.
+            {biz.preview
+              ? `© ${year} ${biz.name}. ${L(biz, `A preview homepage made for ${biz.name}.`, `Pregled početne strane napravljen za ${biz.name}.`)}`
+              : `© ${year} ${site.legalName}. A fictional studio.`}
           </p>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
             <Link href="/privacy" className="link-draw hover:text-ivory">
@@ -107,7 +119,7 @@ export function Footer() {
         <div aria-hidden className="pointer-events-none flex items-end justify-between gap-6 pt-4 text-ivory/[0.07] select-none">
           <svg viewBox="0 0 1000 150" className="h-auto w-full min-w-0 flex-1 overflow-visible" aria-hidden focusable="false">
             <text x="0" y="128" fill="currentColor" fontFamily="var(--font-cormorant)" fontSize="172" letterSpacing="-6" textLength="1000" lengthAdjust="spacingAndGlyphs">
-              Arden &amp; Stone
+              {biz.preview ? biz.shortName : "Arden & Stone"}
             </text>
           </svg>
           <Mark className="mb-[2vw] hidden h-[9vw] w-[9vw] shrink-0 md:block [--mark-accent:currentColor] [--ivory:var(--ink)]" />

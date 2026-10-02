@@ -2,25 +2,19 @@ import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, IBM_Plex_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import { Cursor } from "@/components/layout/Cursor";
-import { DemoBadge } from "@/components/layout/DemoBadge";
-import { Footer } from "@/components/layout/Footer";
-import { Header } from "@/components/layout/Header";
-import { MobileBar } from "@/components/layout/MobileBar";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
-import { JsonLd } from "@/components/ui/JsonLd";
-import { businessSchema, graph, websiteSchema } from "@/lib/schema";
 import { ogImageUrl } from "@/lib/seo";
 import { noindex, site, siteUrl } from "@/lib/site";
 
 const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: ["400"],
   style: ["normal", "italic"],
   variable: "--font-cormorant",
   display: "swap",
 });
-const manrope = Manrope({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-manrope", display: "swap" });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-plex-mono", display: "swap", preload: false });
+const manrope = Manrope({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600"], variable: "--font-manrope", display: "swap" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin", "latin-ext"], weight: ["400"], variable: "--font-plex-mono", display: "swap", preload: false });
 
 const defaultTitle = "Arden & Stone | Dallas Design-Build Renovation Studio";
 
@@ -58,13 +52,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-ivory">
           Skip to content
         </a>
-        <JsonLd data={graph(businessSchema(), websiteSchema())} />
         <SmoothScroll />
-        <Header />
-        <main id="main">{children}</main>
-        <Footer />
-        <MobileBar />
-        <DemoBadge />
+        {/* Header, footer and the rest come from (site)/layout or for/[token]/layout (SiteChrome) */}
+        {children}
         <Cursor />
         <div className="grain" aria-hidden />
       </body>

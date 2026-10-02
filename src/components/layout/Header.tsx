@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { Logo } from "@/components/brand/Logo";
 import { NAV, site } from "@/lib/site";
+import { useBiz } from "@/components/preview/BizContext";
+import { telOf } from "@/lib/biz-core";
 
 const MENU_IMAGES: Record<string, string> = {
   "/work": "/images/hero/modern-dusk-2.jpg",
@@ -18,6 +20,8 @@ const MENU_IMAGES: Record<string, string> = {
 };
 
 export function Header() {
+  const biz = useBiz();
+  const phoneHref = telOf(biz) ?? "";
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -78,7 +82,7 @@ export function Header() {
         )}
       >
         <div className="shell flex h-[var(--header-h)] items-center justify-between gap-6">
-          <Link href="/" aria-label={`${site.name}, home`} className="relative z-10 [--mark-accent:var(--bronze)]">
+          <Link href="/" aria-label={`${biz.name}, home`} className="relative z-10 [--mark-accent:var(--bronze)]">
             <Logo />
           </Link>
 
@@ -95,8 +99,8 @@ export function Header() {
           </nav>
 
           <div className="relative z-10 flex items-center gap-3 md:gap-5">
-            <a href={site.phoneHref} className="hidden label md:inline-flex tabular link-draw pb-1">
-              {site.phone}
+            <a href={phoneHref} className="hidden label md:inline-flex tabular link-draw pb-1">
+              {biz.phoneDisplay}
             </a>
             <Link href="/contact" className={clsx("btn hidden sm:inline-flex min-h-11 px-5", open ? "btn-line border-ivory/40 text-ivory" : "btn-solid")}>
               Book a consultation
@@ -159,13 +163,11 @@ export function Header() {
           </ul>
         </nav>
         <div className="shell relative grid gap-2 pt-8 pb-32 text-sm text-muted">
-          <a href={site.phoneHref} className="font-display text-3xl text-ivory tabular">
-            {site.phone}
+          <a href={phoneHref} className="font-display text-3xl text-ivory tabular">
+            {biz.phoneDisplay}
           </a>
-          <a href={`mailto:${site.email}`}>{site.email}</a>
-          <p>
-            {site.address.street}, {site.address.locality}, {site.address.region}
-          </p>
+          {!biz.preview && <a href={`mailto:${site.email}`}>{site.email}</a>}
+          <p>{biz.preview ? biz.address.full : `${site.address.street}, ${site.address.locality}, ${site.address.region}`}</p>
         </div>
       </div>
     </>
