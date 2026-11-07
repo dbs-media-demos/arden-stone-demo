@@ -22,6 +22,7 @@ export const sr: Record<string, string> = {
   Call: "Pozovite",
   "Get a quote": "Zatražite ponudu",
   "Dismiss concept site notice": "Zatvori obaveštenje",
+  "Project type": "Vrsta projekta",
 
   // Hero
   Introduction: "Uvod",

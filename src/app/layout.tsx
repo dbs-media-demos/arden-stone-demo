@@ -5,15 +5,18 @@ import { Cursor } from "@/components/layout/Cursor";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { ogImageUrl } from "@/lib/seo";
 import { noindex, site, siteUrl } from "@/lib/site";
+import { PHONE_MEDIA } from "@/lib/media";
 
+// Desktop's fonts. Nothing here is preloaded: phones use the two files in public/fonts instead (globals.css).
 const cormorant = Cormorant_Garamond({
   subsets: ["latin", "latin-ext"],
   weight: ["400"],
   style: ["normal", "italic"],
   variable: "--font-cormorant",
   display: "swap",
+  preload: false,
 });
-const manrope = Manrope({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600"], variable: "--font-manrope", display: "swap" });
+const manrope = Manrope({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600"], variable: "--font-manrope", display: "swap", preload: false });
 const plexMono = IBM_Plex_Mono({ subsets: ["latin", "latin-ext"], weight: ["400"], variable: "--font-plex-mono", display: "swap", preload: false });
 
 const defaultTitle = "Arden & Stone | Dallas Design-Build Renovation Studio";
@@ -48,6 +51,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-US" className={`${cormorant.variable} ${manrope.variable} ${plexMono.variable}`}>
+      <head>
+        <link rel="preload" href="/fonts/cormorant-phone.woff2" as="font" type="font/woff2" crossOrigin="anonymous" media={PHONE_MEDIA} />
+        <link rel="preload" href="/fonts/cormorant-phone-italic.woff2" as="font" type="font/woff2" crossOrigin="anonymous" media={PHONE_MEDIA} />
+      </head>
       <body>
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-ivory">
           Skip to content

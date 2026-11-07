@@ -22,6 +22,11 @@
   - Inner pages (mobile): P 87–91, A 100.
   - Desktop: P 97–99.
 
+- Phones (decided 7 Nov 2026, below 768 px or touch; desktop at 1024 px and up is unchanged):
+  - First screen: project photo, service + town headline, Google stars + count, Call button with the number; the next section peeks above the Call + Get a quote bar.
+  - Order by CSS: gallery by project type, before/after, reviews naming the project, services, how it works, budget guide, workshop, materials, statement, team, FAQ, areas, quote form. The team and the short form are phone-only; previews show roles instead of the concept studio's named people.
+  - GSAP and Lenis load on desktop only (`src/lib/motion.ts`); phones use two subset Cormorant files (`scripts/gen-phone-fonts.py`) and a still instead of the workshop film. Widths are in `src/lib/media.ts` and the `phone` / `still` / `pin` variants in `globals.css`.
+
 ## Portfolio copy
 EN title: Arden & Stone: Design-Build Renovation, Dallas
 EN one-liner (≤ 120 chars): A renovation studio site where every room is drawn first, then revealed, with cost estimator and before/after stories.

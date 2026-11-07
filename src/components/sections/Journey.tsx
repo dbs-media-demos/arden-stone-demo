@@ -3,21 +3,23 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import clsx from "clsx";
-import { gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { prefersReducedMotion, useDesktopGSAP } from "@/lib/motion";
 import type { Pic } from "@/lib/images";
 
 export type JourneyStage = { n: string; title: string; weeks: string; text: string; points: string[]; image: Pic };
 
 /**
  * The renovation journey. Desktop: pinned; scrolling walks through five stages while one
- * room is drawn, stamped, framed and finally photographed. Phones: a plain stacked list.
+ * room is drawn, stamped, framed and finally photographed. Phones: a plain stacked timeline,
+ * one stage open at a time (the words of the closed ones stay in the HTML).
  */
-export function Journey({ stages, heading }: { stages: JourneyStage[]; heading: React.ReactNode }) {
+export function Journey({ stages, heading, className }: { stages: JourneyStage[]; heading: React.ReactNode; className?: string }) {
   const root = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
+  const [open, setOpen] = useState(0);
 
-  useGSAP(
-    () => {
+  useDesktopGSAP(
+    ({ gsap }) => {
       if (prefersReducedMotion()) return;
       const mm = gsap.matchMedia();
       mm.add("(min-width: 1024px)", () => {
@@ -54,12 +56,12 @@ export function Journey({ stages, heading }: { stages: JourneyStage[]; heading: 
   );
 
   return (
-    <section ref={root} className="theme-ink relative lg:h-svh lg:motion-reduce:h-auto" aria-labelledby="journey-title">
-      <div className="shell grid gap-12 py-24 lg:h-full lg:grid-cols-12 lg:gap-10 lg:py-0 lg:motion-reduce:py-24">
+    <section ref={root} className={clsx("theme-ink relative pin:h-svh pin:motion-reduce:h-auto", className)} aria-labelledby="journey-title">
+      <div className="shell grid gap-12 py-24 phone:gap-3.5 phone:py-7 pin:h-full pin:grid-cols-12 pin:gap-10 pin:py-0 pin:motion-reduce:py-24">
         {/* Left: heading + stage rail */}
-        <div className="flex flex-col justify-center lg:col-span-5 lg:pt-[var(--header-h)]">
+        <div className="flex flex-col justify-center pin:col-span-5 pin:pt-[var(--header-h)]">
           {heading}
-          <ol className="relative mt-12 hidden gap-4 pl-6 lg:grid lg:motion-reduce:hidden">
+          <ol className="relative mt-12 hidden gap-4 pl-6 pin:grid pin:motion-reduce:hidden">
             <span className="absolute top-1 bottom-1 left-0 w-px bg-line" aria-hidden />
             <span data-progress className="absolute top-1 bottom-1 left-0 w-px origin-top bg-bronze-light" aria-hidden />
             {stages.map((s, i) => (
@@ -73,7 +75,7 @@ export function Journey({ stages, heading }: { stages: JourneyStage[]; heading: 
         </div>
 
         {/* Right (desktop): stacked frames + the active stage's words */}
-        <div className="relative hidden lg:col-span-7 lg:block lg:py-[calc(var(--header-h)+1.5rem)] lg:motion-reduce:hidden">
+        <div className="relative hidden pin:col-span-7 pin:block pin:py-[calc(var(--header-h)+1.5rem)] pin:motion-reduce:hidden">
           <div className="relative h-[58%] overflow-hidden rounded-sm">
             {stages.map((s, i) => (
               <div key={s.n} data-frame className="absolute inset-0 overflow-hidden" style={{ zIndex: i }}>
@@ -99,23 +101,41 @@ export function Journey({ stages, heading }: { stages: JourneyStage[]; heading: 
         </div>
 
         {/* Phones: simple list */}
-        <ol className="grid gap-14 lg:hidden lg:col-span-12 lg:motion-reduce:grid lg:motion-reduce:grid-cols-2 lg:motion-reduce:gap-x-10">
-          {stages.map((s) => (
-            <li key={s.n}>
-              <div className="relative aspect-[4/3] overflow-hidden rounded-sm">
-                <Image src={s.image.src} alt={s.image.alt} fill sizes="100vw" quality={70} className="object-cover" />
+        <ol className="grid gap-14 phone:gap-0 phone:border-b phone:border-line pin:hidden pin:col-span-12 pin:motion-reduce:grid pin:motion-reduce:grid-cols-2 pin:motion-reduce:gap-x-10">
+          {stages.map((s, i) => (
+            <li key={s.n} className="phone:border-t phone:border-line">
+              <button
+                type="button"
+                aria-expanded={open === i}
+                onClick={() => setOpen(open === i ? -1 : i)}
+                className="block w-full text-left phone:flex phone:items-center phone:gap-3 phone:py-2"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden rounded-sm phone:order-3 phone:ml-auto phone:aspect-square phone:w-11 phone:shrink-0">
+                  <Image
+                    src={s.image.src}
+                    alt={s.image.alt}
+                    fill
+                    sizes="(max-width: 767.98px) 72px, (hover: none) and (max-width: 1023.98px) 72px, 100vw"
+                    quality={60}
+                    className="object-cover"
+                  />
+                </div>
+                <div className="mt-5 flex items-baseline gap-4 phone:mt-0 phone:block phone:min-w-0">
+                  <span className="label text-bronze-light tabular phone:mr-2">{s.n}</span>
+                  <h3 className="display-m phone:inline">{s.title}</h3>
+                  <span className="label ml-auto text-faint phone:ml-0 phone:block">{s.weeks}</span>
+                </div>
+              </button>
+              <div className={clsx("phone:grid phone:transition-[grid-template-rows] phone:duration-500 phone:ease-[var(--ease-out-expo)]", open === i ? "phone:grid-rows-[1fr]" : "phone:grid-rows-[0fr]")}>
+                <div className="phone:overflow-hidden">
+                  <p className="mt-4 text-ivory/85 leading-relaxed phone:mt-0 phone:text-[0.9375rem] phone:leading-[1.45]">{s.text}</p>
+                  <ul className="mt-4 grid gap-1.5 text-sm text-muted phone:mt-2 phone:gap-0.5 phone:pb-3.5 phone:text-[0.8125rem]">
+                    {s.points.map((p) => (
+                      <li key={p}>— {p}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <div className="mt-5 flex items-baseline gap-4">
-                <span className="label text-bronze-light tabular">{s.n}</span>
-                <h3 className="display-m">{s.title}</h3>
-                <span className="label ml-auto text-faint">{s.weeks}</span>
-              </div>
-              <p className="mt-4 text-ivory/85 leading-relaxed">{s.text}</p>
-              <ul className="mt-4 grid gap-1.5 text-sm text-muted">
-                {s.points.map((p) => (
-                  <li key={p}>— {p}</li>
-                ))}
-              </ul>
             </li>
           ))}
         </ol>

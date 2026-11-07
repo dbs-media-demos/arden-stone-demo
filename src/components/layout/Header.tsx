@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { Logo } from "@/components/brand/Logo";
 import { NAV, site } from "@/lib/site";
-import { useBiz } from "@/components/preview/BizContext";
+import { useBiz, useT } from "@/components/preview/BizContext";
 import { telOf } from "@/lib/biz-core";
 
 const MENU_IMAGES: Record<string, string> = {
@@ -21,6 +21,7 @@ const MENU_IMAGES: Record<string, string> = {
 
 export function Header() {
   const biz = useBiz();
+  const t = useT();
   const phoneHref = telOf(biz) ?? "";
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -78,11 +79,13 @@ export function Header() {
           "fixed inset-x-0 top-0 z-50 transition-[transform,background-color,backdrop-filter] duration-700 ease-[var(--ease-out-expo)]",
           hidden && !open ? "-translate-y-full" : "translate-y-0",
           solid && !open ? "bg-ivory/80 backdrop-blur-md" : "bg-transparent",
+          // Phones: opaque from the first pixel, nothing shows through
+          !open && "phone:bg-ivory phone:backdrop-blur-none",
           open ? "text-ivory" : "text-ink",
         )}
       >
         <div className="shell flex h-[var(--header-h)] items-center justify-between gap-6">
-          <Link href="/" aria-label={`${biz.name}, home`} className="relative z-10 [--mark-accent:var(--bronze)]">
+          <Link href="/" aria-label={`${biz.name}, ${biz.lang === "sr" ? "početna" : "home"}`} className="relative z-10 [--mark-accent:var(--bronze)]">
             <Logo />
           </Link>
 
@@ -102,8 +105,8 @@ export function Header() {
             <a href={phoneHref} className="hidden label md:inline-flex tabular link-draw pb-1">
               {biz.phoneDisplay}
             </a>
-            <Link href="/contact" className={clsx("btn hidden sm:inline-flex min-h-11 px-5", open ? "btn-line border-ivory/40 text-ivory" : "btn-solid")}>
-              Book a consultation
+            <Link href="/contact" className={clsx("btn hidden min-h-11 px-5 sm:inline-flex", open ? "btn-line border-ivory/40 text-ivory" : "btn-solid")}>
+              {t("Book a consultation")}
             </Link>
             <button
               ref={toggleRef}

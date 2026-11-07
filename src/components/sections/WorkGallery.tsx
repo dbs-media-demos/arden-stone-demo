@@ -2,13 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, ViewTransition } from "react";
+import { useEffect, useRef, useState, ViewTransition } from "react";
 import clsx from "clsx";
-import { Flip } from "gsap/Flip";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { isStill, loadKit, prefersReducedMotion } from "@/lib/motion";
 import type { Pic } from "@/lib/images";
 
-gsap.registerPlugin(Flip);
+// Flip comes with the desktop motion kit; phones re-flow the grid plainly and never load it.
+let flipKit: Promise<{ gsap: Awaited<ReturnType<typeof loadKit>>["gsap"]; Flip: typeof import("gsap/Flip").Flip }> | null = null;
+const loadFlip = () =>
+  (flipKit ??= Promise.all([loadKit(), import("gsap/Flip")]).then(([{ gsap }, { Flip }]) => {
+    gsap.registerPlugin(Flip);
+    return { gsap, Flip };
+  }));
 
 export type GalleryItem = { slug: string; title: string; area: string; year: number; categories: string[]; summary: string; image: Pic };
 
@@ -17,13 +22,18 @@ export function WorkGallery({ items, categories }: { items: GalleryItem[]; categ
   const grid = useRef<HTMLUListElement>(null);
   const [filter, setFilter] = useState("all");
 
-  const apply = (next: string) => {
+  useEffect(() => {
+    if (!isStill()) void loadFlip();
+  }, []);
+
+  const apply = async (next: string) => {
     if (next === filter) return;
     const el = grid.current;
-    if (!el || prefersReducedMotion()) {
+    if (!el || prefersReducedMotion() || isStill()) {
       setFilter(next);
       return;
     }
+    const { gsap, Flip } = await loadFlip();
     const state = Flip.getState(el.querySelectorAll("[data-item]"));
     setFilter(next);
     requestAnimationFrame(() =>

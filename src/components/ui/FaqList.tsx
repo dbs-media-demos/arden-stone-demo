@@ -21,9 +21,9 @@ export function FaqList({ items, className, defaultOpen = 0 }: { items: { q: str
                 aria-expanded={isOpen}
                 aria-controls={`${id}-a${i}`}
                 onClick={() => setOpen(isOpen ? null : i)}
-                className="group flex w-full items-start justify-between gap-6 py-6 text-left md:py-7"
+                className="group flex w-full items-start justify-between gap-6 py-6 text-left phone:gap-3 phone:py-3 md:py-7"
               >
-                <span className="flex gap-5">
+                <span className="flex gap-5 phone:gap-3">
                   <span className="label pt-2 text-faint tabular">{String(i + 1).padStart(2, "0")}</span>
                   <span className="display-s transition-colors group-hover:text-accent">{f.q}</span>
                 </span>
@@ -40,7 +40,7 @@ export function FaqList({ items, className, defaultOpen = 0 }: { items: { q: str
               className={clsx("grid transition-[grid-template-rows] duration-700 ease-[var(--ease-out-expo)]", isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}
             >
               <div className="overflow-hidden">
-                <p className={clsx("max-w-2xl pb-8 pl-11 text-muted leading-relaxed transition-opacity duration-500", !isOpen && "opacity-0")}>{f.a}</p>
+                <p className={clsx("max-w-2xl pb-8 pl-11 text-muted leading-relaxed transition-opacity duration-500 phone:pb-4 phone:pl-8 phone:text-[0.9375rem] phone:leading-[1.45]", !isOpen && "opacity-0")}>{f.a}</p>
               </div>
             </div>
           </div>

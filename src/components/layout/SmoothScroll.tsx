@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import Lenis from "lenis";
-import { gsap, prefersReducedMotion, ScrollTrigger } from "@/lib/gsap";
+import type Lenis from "lenis";
+import { isStill, loadKit, prefersReducedMotion } from "@/lib/motion";
 
 declare global {
   interface Window {
@@ -16,26 +16,37 @@ export function SmoothScroll() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Touch devices keep native momentum scrolling; reduced motion keeps native scrolling.
-    if (prefersReducedMotion() || window.matchMedia("(hover: none), (pointer: coarse)").matches) return;
-    const lenis = new Lenis({ lerp: 0.095, wheelMultiplier: 1, anchors: { offset: -90 } });
-    window.__lenis = lenis;
-    lenis.on("scroll", ScrollTrigger.update);
-    const tick = (time: number) => lenis.raf(time * 1000);
-    gsap.ticker.add(tick);
-    gsap.ticker.lagSmoothing(0);
+    // Touch devices keep native momentum scrolling (and never download Lenis); reduced motion keeps native scrolling.
+    if (prefersReducedMotion() || isStill()) return;
+    let dead = false;
+    let stop: (() => void) | undefined;
+    void Promise.all([loadKit(), import("lenis")]).then(([{ gsap, ScrollTrigger }, { default: LenisClass }]) => {
+      if (dead) return;
+      const lenis = new LenisClass({ lerp: 0.095, wheelMultiplier: 1, anchors: { offset: -90 } });
+      window.__lenis = lenis;
+      lenis.on("scroll", ScrollTrigger.update);
+      const tick = (time: number) => lenis.raf(time * 1000);
+      gsap.ticker.add(tick);
+      gsap.ticker.lagSmoothing(0);
+      stop = () => {
+        gsap.ticker.remove(tick);
+        lenis.destroy();
+        delete window.__lenis;
+      };
+    });
     return () => {
-      gsap.ticker.remove(tick);
-      lenis.destroy();
-      delete window.__lenis;
+      dead = true;
+      stop?.();
     };
   }, []);
 
   // New page: re-measure every trigger once the new layout (and fonts/images) settle.
   useEffect(() => {
+    if (isStill()) return;
     window.__lenis?.resize();
-    const a = window.setTimeout(() => ScrollTrigger.refresh(), 350);
-    const b = window.setTimeout(() => ScrollTrigger.refresh(), 1200);
+    const refresh = () => void loadKit().then(({ ScrollTrigger }) => ScrollTrigger.refresh());
+    const a = window.setTimeout(refresh, 350);
+    const b = window.setTimeout(refresh, 1200);
     return () => {
       window.clearTimeout(a);
       window.clearTimeout(b);

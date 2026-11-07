@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import clsx from "clsx";
-import { gsap, prefersReducedMotion, ScrollTrigger, useGSAP, whenIdle } from "@/lib/gsap";
+import { prefersReducedMotion, useDesktopGSAP } from "@/lib/motion";
 
 type Pin = { slug: string; short: string; name: string; x: number; y: number; drive: string };
 
@@ -15,11 +15,11 @@ export function AreaMap({ pins, className }: { pins: Pin[]; className?: string }
   const root = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<string | null>(null);
 
-  useGSAP(
-    (_ctx, contextSafe) => {
+  useDesktopGSAP(
+    ({ gsap, ScrollTrigger, whenIdle }, contextSafe) => {
       if (prefersReducedMotion()) return;
       return whenIdle(
-        contextSafe!(() => {
+        contextSafe(() => {
           const paths = gsap.utils.toArray<SVGPathElement>("[data-draw]", root.current);
           paths.forEach((p) => {
             const len = p.getTotalLength();
@@ -45,7 +45,7 @@ export function AreaMap({ pins, className }: { pins: Pin[]; className?: string }
   const studio = { x: 57, y: 50 };
 
   return (
-    <div ref={root} className={clsx("relative", className)}>
+    <div ref={root} className={clsx("relative phone:min-w-0", className)}>
       <svg
         viewBox="0 0 100 70"
         className="h-auto w-full text-fg"
@@ -126,7 +126,7 @@ export function AreaMap({ pins, className }: { pins: Pin[]; className?: string }
         ))}
       </svg>
 
-      <ul className="mt-8 grid gap-px border-y border-line sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="swipe mt-8 grid gap-px border-y border-line phone:-mx-[var(--gutter)] phone:mt-3 phone:border-0 sm:grid-cols-2 lg:grid-cols-3">
         {pins.map((p) => (
           <li key={p.slug}>
             <Link
@@ -135,9 +135,9 @@ export function AreaMap({ pins, className }: { pins: Pin[]; className?: string }
               onPointerLeave={() => setHover(null)}
               onFocus={() => setHover(p.slug)}
               onBlur={() => setHover(null)}
-              className={clsx("flex h-full flex-col gap-1 py-4 pr-4 transition-colors", hover === p.slug && "text-accent")}
+              className={clsx("flex h-full flex-col gap-1 py-4 pr-4 transition-colors phone:border-t phone:border-line phone:py-2", hover === p.slug && "text-accent")}
             >
-              <span className="font-display text-2xl leading-tight">{p.name}</span>
+              <span className="font-display text-2xl leading-tight phone:text-[1.2rem]">{p.name}</span>
               <span className="label text-faint">{p.drive}</span>
             </Link>
           </li>

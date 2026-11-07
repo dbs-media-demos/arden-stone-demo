@@ -1,24 +1,50 @@
 "use client";
 
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import { gsap, isTouch, prefersReducedMotion, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { useT } from "@/components/preview/BizContext";
+import { isStill, isTouch, prefersReducedMotion, useDesktopGSAP, type MotionKit } from "@/lib/motion";
+import { NOT_PHONE_MEDIA, PHONE_MEDIA } from "@/lib/media";
 import type { Pic } from "@/lib/images";
 
 export type HeroSlide = { photo: Pic; sketch: Pic; sheet: string; room: string; place: string; position?: string };
 
 const SLIDE_MS = 7200;
+const BLANK = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+
+/** The drawing under the photo. Only the desktop layout uses it, so a phone never fetches it. */
+function Sketch({ sketch, position, preload }: { sketch: Pic; position?: string; preload: boolean }) {
+  const { srcSet, sizes } = getImageProps({ src: sketch.src, alt: "", fill: true, sizes: "100vw", quality: 60 }).props;
+  return (
+    <>
+      {preload && <link rel="preload" as="image" imageSrcSet={srcSet} imageSizes={sizes} media={NOT_PHONE_MEDIA} />}
+      <picture>
+        <source media={NOT_PHONE_MEDIA} srcSet={srcSet} sizes={sizes} />
+        <img src={BLANK} alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: position }} />
+      </picture>
+    </>
+  );
+}
+
+/** Phones: the photo is the LCP, so it starts before any script. Desktop keeps its own order. */
+function PhonePhotoPreload({ photo }: { photo: Pic }) {
+  const { srcSet, sizes } = getImageProps({ src: photo.src, alt: "", fill: true, sizes: "100vw", quality: 75 }).props;
+  return <link rel="preload" as="image" imageSrcSet={srcSet} imageSizes={sizes} media={PHONE_MEDIA} fetchPriority="high" />;
+}
 
 /**
  * The home hero. A pencil drawing of each room "develops" into the photograph
  * behind a bronze drafting line (first slide is pure CSS, so it paints with the HTML).
  * On desktop a lens follows the pointer and shows the drawing underneath the photo,
- * and scrolling opens the frame out to full bleed.
+ * and scrolling opens the frame out to full bleed. On phones the photo is there at once:
+ * the drafting line crosses it one time and leaves a dimension mark.
  */
 export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; children: React.ReactNode; footer: React.ReactNode }) {
+  const t = useT();
   const root = useRef<HTMLElement>(null);
   const frame = useRef<HTMLDivElement>(null);
+  const motion = useRef<MotionKit | null>(null);
   const [index, setIndex] = useState(0);
   const [extra, setExtra] = useState(false); // other slides mount after the first has painted
   const [paused, setPaused] = useState(false);
@@ -26,9 +52,9 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
   const [armed, setArmed] = useState(false);
   const busy = useRef(false);
 
-  // Mount the other rooms once the browser is idle, so they never compete with the LCP.
+  // Mount the other rooms once the browser is idle, so they never compete with the LCP. Phones keep the one photo.
   useEffect(() => {
-    if (prefersReducedMotion()) return;
+    if (prefersReducedMotion() || isStill()) return;
     const hasIdle = "requestIdleCallback" in window;
     const id = hasIdle ? window.requestIdleCallback(() => setExtra(true), { timeout: 2500 }) : window.setTimeout(() => setExtra(true), 1800);
     return () => (hasIdle ? window.cancelIdleCallback(id) : window.clearTimeout(id));
@@ -36,7 +62,8 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
 
   const goTo = (next: number) => {
     const el = frame.current;
-    if (!el || busy.current || next === index) return;
+    const gsap = motion.current?.gsap;
+    if (!el || !gsap || busy.current || next === index) return;
     const slidesEls = el.querySelectorAll<HTMLElement>("[data-slide]");
     const incoming = slidesEls[next];
     const outgoing = slidesEls[index];
@@ -85,8 +112,10 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  useGSAP(
-    () => {
+  useDesktopGSAP(
+    (kit) => {
+      motion.current = kit;
+      const { gsap, ScrollTrigger } = kit;
       const el = frame.current;
       const section = root.current;
       if (!el || !section || prefersReducedMotion()) return;
@@ -140,32 +169,24 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
   );
 
   return (
-    <section ref={root} className="relative lg:h-svh lg:min-h-[640px]" aria-label="Introduction">
-      <div data-hero-copy className="shell relative z-10 flex flex-col pt-[calc(var(--header-h)+2.5rem)] lg:mx-0 lg:h-full lg:w-[44%] lg:max-w-none lg:justify-center lg:pt-[var(--header-h)] lg:pr-10">
+    <section ref={root} data-hero data-tr-first className="hero-stage relative lg:h-svh lg:min-h-[640px]" aria-label="Introduction">
+      <PhonePhotoPreload photo={slides[0].photo} />
+      <div data-hero-copy className="hero-copy shell relative z-10 flex flex-col pt-[calc(var(--header-h)+2.5rem)] lg:mx-0 lg:h-full lg:w-[44%] lg:max-w-none lg:justify-center lg:pt-[var(--header-h)] lg:pr-10">
         {children}
       </div>
 
       {/* Frame: mobile = block below the copy; desktop = full-bleed layer clipped to the right column. */}
       <div
         ref={frame}
-        className="lens-host relative mx-[var(--gutter)] mt-7 h-[64svh] md:mt-10 min-h-[420px] overflow-hidden bg-paper lg:absolute lg:inset-0 lg:m-0 lg:h-auto lg:[clip-path:inset(calc(var(--header-h)+0.75rem)_var(--gutter)_88px_44%)]"
+        className="hero-frame lens-host relative mx-[var(--gutter)] mt-7 h-[64svh] md:mt-10 min-h-[420px] overflow-hidden bg-paper lg:absolute lg:inset-0 lg:m-0 lg:h-auto lg:[clip-path:inset(calc(var(--header-h)+0.75rem)_var(--gutter)_88px_44%)]"
       >
         {slides.map((s, i) => {
           if (i > 0 && !extra) return null;
           return (
             <div key={s.photo.src} data-slide className={clsx("absolute inset-0", i === 0 ? "z-2" : "invisible z-1 opacity-0")}>
               <div data-zoom className="absolute inset-0">
-                <div data-sketch className="absolute inset-0">
-                  <Image
-                    src={s.sketch.src}
-                    alt=""
-                    fill
-                    sizes="100vw"
-                    quality={60}
-                    preload={i === 0}
-                    className="object-cover"
-                    style={{ objectPosition: s.position }}
-                  />
+                <div data-sketch className="absolute inset-0 phone:hidden">
+                  <Sketch sketch={s.sketch} position={s.position} preload={i === 0} />
                 </div>
                 <div data-photo className={clsx("lens absolute inset-0", i === 0 && "hero-develop")}>
                   <Image
@@ -185,18 +206,19 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
           );
         })}
         <span data-line aria-hidden className="hero-draft-line pointer-events-none absolute top-0 bottom-0 z-10 w-px bg-bronze shadow-[0_0_0_1px_rgba(196,151,100,0.25)]" style={{ left: "0%", opacity: 0 }} />
+        <span aria-hidden className="hero-dim pointer-events-none absolute inset-x-4 top-4 z-10 hidden h-2 phone:block" />
 
         {/* Sheet chrome, aligned to the initially visible column on desktop. */}
         <div className="pointer-events-none absolute inset-0 z-20 lg:top-[calc(var(--header-h)+0.75rem)] lg:right-[var(--gutter)] lg:bottom-[5.5rem] lg:left-[44%]">
-          <div className="absolute right-4 bottom-4 left-4 flex items-end justify-between gap-4 text-ink md:right-6 md:bottom-6 md:left-6">
-            <div className="rounded-sm bg-ivory/88 px-3 py-2 backdrop-blur-sm">
+          <div className="absolute right-4 bottom-4 left-4 flex items-end justify-between gap-4 text-ink phone:right-3 phone:bottom-3 phone:left-3 md:right-6 md:bottom-6 md:left-6">
+            <div className="hero-sheet rounded-sm bg-ivory/88 px-3 py-2 backdrop-blur-sm">
               <p className="label">
                 <span className="mr-2 border border-ink/40 px-1">{slides[index].sheet}</span>
-                {slides[index].room}
+                {t(slides[index].room)}
               </p>
               <p className="label mt-1 text-muted">{slides[index].place}</p>
             </div>
-            <div className="pointer-events-auto flex items-center gap-3 rounded-sm bg-ivory/88 px-3 py-2.5 backdrop-blur-sm">
+            <div className="pointer-events-auto flex items-center gap-3 rounded-sm bg-ivory/88 px-3 py-2.5 backdrop-blur-sm still:hidden">
               <span className="label whitespace-nowrap tabular">
                 {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
               </span>
@@ -223,13 +245,13 @@ export function HeroSketch({ slides, children, footer }: { slides: HeroSlide[]; 
               </div>
             </div>
           </div>
-          <p className="label absolute top-4 right-4 hidden rounded-sm bg-ivory/88 px-3 py-2 text-ink backdrop-blur-sm lg:block">
-            Move over the photo to see the drawing
+          <p className="label absolute top-4 right-4 hidden rounded-sm bg-ivory/88 px-3 py-2 text-ink backdrop-blur-sm pin:block">
+            {t("Move over the photo to see the drawing")}
           </p>
         </div>
       </div>
 
-      <div className="shell relative z-10 lg:absolute lg:inset-x-0 lg:bottom-0 lg:max-w-none">{footer}</div>
+      <div className="hero-foot shell relative z-10 lg:absolute lg:inset-x-0 lg:bottom-0 lg:max-w-none">{footer}</div>
     </section>
   );
 }

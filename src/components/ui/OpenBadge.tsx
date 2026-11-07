@@ -22,12 +22,12 @@ export function OpenBadge({ className }: { className?: string }) {
 
   if (!biz.hours) return null;
   return (
-    <span className={clsx("inline-flex items-center gap-2 label", className)} aria-live="polite">
-      <span className="relative flex h-2 w-2">
-        {status?.open && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-600/60" />}
+    <span className={clsx("inline-flex items-center gap-2 label phone:h-4 phone:max-w-full phone:whitespace-nowrap", className)} aria-live="polite">
+      <span className={clsx("relative flex h-2 w-2 phone:shrink-0", !status && "phone:invisible")}>
+        {status?.open && <span className="absolute inset-0 animate-ping rounded-full bg-emerald-600/60 phone:hidden" />}
         <span className={clsx("relative h-2 w-2 rounded-full", status?.open ? "bg-emerald-600" : status ? "bg-bronze" : "bg-faint")} />
       </span>
-      {status?.label ?? biz.hoursSummary}
+      <span className={clsx("phone:truncate", !status && "phone:invisible")}>{status?.label ?? biz.hoursSummary}</span>
     </span>
   );
 }

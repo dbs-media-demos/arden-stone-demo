@@ -3,21 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import { gsap, prefersReducedMotion, useGSAP, whenIdle } from "@/lib/gsap";
+import { prefersReducedMotion, useDesktopGSAP } from "@/lib/motion";
 import type { Pic } from "@/lib/images";
 import { Arrow } from "@/components/ui/Button";
 
 export type StackItem = { href: string; sheet: string; title: string; lede: string; price: string; duration: string; image: Pic };
 
-/** Sticky cards that stack on top of each other; the covered card sinks back and dims. */
+/** Sticky cards that stack on top of each other; the covered card sinks back and dims. Phones: a swipe row of the same cards. */
 export function ServiceStack({ items }: { items: StackItem[] }) {
   const root = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    (_ctx, contextSafe) => {
+  useDesktopGSAP(
+    ({ gsap, whenIdle }, contextSafe) => {
       if (prefersReducedMotion()) return;
       return whenIdle(
-        contextSafe!(() => {
+        contextSafe(() => {
           const cards = gsap.utils.toArray<HTMLElement>("[data-card]", root.current);
           cards.forEach((card, i) => {
             const next = cards[i + 1];
@@ -40,7 +40,7 @@ export function ServiceStack({ items }: { items: StackItem[] }) {
   );
 
   return (
-    <div ref={root} className="relative">
+    <div ref={root} className="service-stack relative">
       {items.map((s, i) => (
         <div key={s.href} data-card className="sticky pb-6" style={{ top: `calc(var(--header-h) + ${0.5 + i * 0.9}rem)` }}>
           <div data-card-inner className="relative origin-top overflow-hidden rounded-sm bg-paper will-change-transform">
@@ -76,7 +76,7 @@ export function ServiceStack({ items }: { items: StackItem[] }) {
                   src={s.image.src}
                   alt={s.image.alt}
                   fill
-                  sizes="(min-width: 768px) 58vw, 100vw"
+                  sizes="(max-width: 767.98px) 45vw, (hover: none) and (max-width: 1023.98px) 30vw, (min-width: 768px) 58vw, 100vw"
                   quality={75}
                   className="object-cover transition-transform duration-[1.6s] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]"
                 />

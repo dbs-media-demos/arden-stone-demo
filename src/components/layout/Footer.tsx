@@ -27,19 +27,24 @@ const TRAIL: ImageKey[] = [
 export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="theme-ink relative overflow-hidden pb-24 md:pb-10">
+    <footer className="theme-ink relative overflow-hidden pb-24 md:pb-10 phone:pb-20">
       <ImageTrail pics={TRAIL.map((k) => pic(k, ""))} className="relative">
-        <div className="shell relative py-24 md:py-36">
-          <p className="eyebrow mb-8">Start with a conversation</p>
+        <div className="shell relative py-24 phone:py-8 md:py-36">
+          <p className="eyebrow mb-8 phone:mb-2.5">Start with a conversation</p>
           <p className="display-xxl max-w-[14ch] text-balance">
             Let&rsquo;s draw your <em className="italic-accent">home.</em>
           </p>
-          <div className="mt-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-4">
+          <div className="mt-12 flex flex-col gap-6 phone:mt-5 phone:gap-4 md:flex-row md:items-center md:justify-between phone:flex-col phone:items-stretch">
+            <div className="flex flex-wrap items-center gap-4 phone:gap-2.5 phone:[&_.btn]:w-full phone:[&>span]:w-full">
               <Button href="/contact">Book a consultation</Button>
-              <Button href={telOf(biz)!} variant="line" arrow={false}>
-                {biz.phoneDisplay}
-              </Button>
+              {/* The bar and the details below carry the number on phones */}
+              {biz.phone && (
+                <span className="contents phone:hidden">
+                  <Button href={telOf(biz)!} variant="line" arrow={false}>
+                    {biz.phoneDisplay}
+                  </Button>
+                </span>
+              )}
             </div>
             <p className="max-w-sm text-muted">The first visit is free, takes about ninety minutes, and you will leave with an honest budget range.</p>
           </div>
@@ -48,14 +53,14 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
 
       <div className="shell relative">
         <div className="hairline" />
-        <div className="grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-12">
-          <div className="lg:col-span-4">
+        <div className="grid gap-12 py-16 phone:grid-cols-2 phone:gap-x-4 phone:gap-y-4 phone:py-5 sm:grid-cols-2 lg:grid-cols-12">
+          <div className="phone:col-span-2 lg:col-span-4">
             <address className="not-italic">
               {biz.preview ? (
-                <p className="font-display text-3xl leading-tight">{biz.address.full}</p>
+                <p className="font-display text-3xl leading-tight phone:text-2xl">{biz.address.full}</p>
               ) : (
                 <>
-                  <p className="font-display text-3xl leading-tight">
+                  <p className="font-display text-3xl leading-tight phone:text-2xl">
                     {site.address.street}
                     <br />
                     {site.address.locality}, {site.address.region} {site.address.postalCode}
@@ -64,10 +69,12 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
                 </>
               )}
             </address>
-            <div className="mt-8 grid gap-3">
-              <a href={telOf(biz)!} className="link-draw w-fit tabular text-lg">
-                {biz.phoneDisplay}
-              </a>
+            <div className="mt-8 grid gap-3 phone:mt-3 phone:flex phone:flex-wrap phone:items-center phone:gap-x-4 phone:gap-y-1.5">
+              {biz.phone && (
+                <a href={telOf(biz)!} className="link-draw w-fit tabular text-lg">
+                  {biz.phoneDisplay}
+                </a>
+              )}
               {!biz.preview && (
                 <a href={`mailto:${site.email}`} className="link-draw w-fit">
                   {site.email}
@@ -94,13 +101,13 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
           />
           <FooterCol
             title="Areas"
-            className="lg:col-span-3"
+            className="footer-areas phone:col-span-2 lg:col-span-3"
             links={biz.preview ? [{ href: "/areas", label: biz.area }] : [{ href: "/areas", label: "All service areas" }, ...AREAS.map((a) => ({ href: `/areas/${a.slug}`, label: a.name }))]}
           />
         </div>
 
         <div className="hairline" />
-        <div className="flex flex-col gap-4 py-8 text-sm text-faint md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 py-8 text-sm text-faint phone:gap-1.5 phone:py-3 md:flex-row md:items-center md:justify-between phone:flex-col phone:items-start">
           <p>
             {biz.preview
               ? `© ${year} ${biz.name}. ${L(biz, `A preview homepage made for ${biz.name}.`, `Pregled početne strane napravljen za ${biz.name}.`)}`
@@ -116,7 +123,7 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
           </div>
         </div>
 
-        <div aria-hidden className="pointer-events-none flex items-end justify-between gap-6 pt-4 text-ivory/[0.07] select-none">
+        <div aria-hidden className="pointer-events-none flex items-end justify-between gap-6 pt-4 text-ivory/[0.07] select-none phone:pt-0">
           <svg viewBox="0 0 1000 150" className="h-auto w-full min-w-0 flex-1 overflow-visible" aria-hidden focusable="false">
             <text x="0" y="128" fill="currentColor" fontFamily="var(--font-cormorant)" fontSize="172" letterSpacing="-6" textLength="1000" lengthAdjust="spacingAndGlyphs">
               {biz.preview ? biz.shortName : "Arden & Stone"}
@@ -132,8 +139,8 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
 function FooterCol({ title, links, className }: { title: string; links: { href: string; label: string }[]; className?: string }) {
   return (
     <nav aria-label={title} className={className}>
-      <p className="label mb-5 text-faint">{title}</p>
-      <ul className="grid gap-2.5">
+      <p className="label mb-5 text-faint phone:mb-2">{title}</p>
+      <ul className="footer-links grid gap-2.5 phone:gap-0 phone:text-[0.875rem]">
         {links.map((l) => (
           <li key={l.href}>
             <Link href={l.href} className="link-draw text-ivory/85 hover:text-ivory">

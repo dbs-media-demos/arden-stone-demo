@@ -2,9 +2,9 @@ import clsx from "clsx";
 import type { ReactNode } from "react";
 
 /** Five stars, filled to `value`. */
-export function Stars({ value = 5, className }: { value?: number; className?: string }) {
+export function Stars({ value = 5, className, label }: { value?: number; className?: string; label?: string }) {
   return (
-    <span className={clsx("inline-flex gap-0.5 text-bronze", className)} aria-label={`${value} out of 5 stars`} role="img">
+    <span className={clsx("inline-flex gap-0.5 text-bronze", className)} aria-label={label ?? `${value} out of 5 stars`} role="img">
       {Array.from({ length: 5 }, (_, i) => (
         <svg key={i} viewBox="0 0 20 20" className="h-3.5 w-3.5" aria-hidden>
           <path
@@ -44,12 +44,12 @@ export function SectionHead({
   align?: "left" | "split";
 }) {
   return (
-    <div className={clsx(align === "split" ? "grid gap-8 md:grid-cols-12 md:items-end" : "max-w-4xl", className)}>
-      <div className={align === "split" ? "md:col-span-7" : undefined}>
-        {eyebrow && <p className="eyebrow mb-6">{eyebrow}</p>}
+    <div className={clsx(align === "split" ? "grid gap-8 phone:gap-2.5 phone:grid-cols-1 md:grid-cols-12 md:items-end" : "max-w-4xl", className)}>
+      <div className={align === "split" ? "md:col-span-7 phone:col-auto" : undefined}>
+        {eyebrow && <p className="eyebrow mb-6 phone:mb-2.5">{eyebrow}</p>}
         {title}
       </div>
-      {children && <div className={clsx(align === "split" ? "md:col-span-4 md:col-start-9" : "mt-6", "lede")}>{children}</div>}
+      {children && <div className={clsx(align === "split" ? "md:col-span-4 md:col-start-9 phone:col-auto phone:col-start-auto" : "mt-6", "lede")}>{children}</div>}
     </div>
   );
 }

@@ -1,18 +1,18 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap, prefersReducedMotion, ScrollTrigger, useGSAP, whenIdle } from "@/lib/gsap";
+import { prefersReducedMotion, useDesktopGSAP } from "@/lib/motion";
 
-/** Number that counts up once it scrolls into view. The final value is in the HTML. */
+/** Number that counts up once it scrolls into view (desktop). The final value is in the HTML; phones just show it. */
 export function Counter({ value, suffix = "", prefix = "", className }: { value: number; suffix?: string; prefix?: string; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
 
-  useGSAP(
-    (_ctx, contextSafe) => {
+  useDesktopGSAP(
+    ({ gsap, ScrollTrigger, whenIdle }, contextSafe) => {
       const el = ref.current;
       if (!el || prefersReducedMotion()) return;
       return whenIdle(
-        contextSafe!(() => {
+        contextSafe(() => {
           const obj = { v: 0 };
           ScrollTrigger.create({
             trigger: el,

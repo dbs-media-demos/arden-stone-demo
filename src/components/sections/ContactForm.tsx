@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import clsx from "clsx";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { isStill, loadKit, prefersReducedMotion } from "@/lib/motion";
 import { Arrow } from "@/components/ui/Button";
 import { site } from "@/lib/site";
 
@@ -55,8 +55,10 @@ export function ContactForm() {
 
   // Animate each step in.
   useEffect(() => {
-    if (!panel.current || prefersReducedMotion()) return;
-    gsap.fromTo(panel.current.children, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.05, ease: "expo.out" });
+    if (!panel.current || prefersReducedMotion() || isStill()) return;
+    void loadKit().then(({ gsap }) => {
+      if (panel.current) gsap.fromTo(panel.current.children, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.05, ease: "expo.out" });
+    });
   }, [step, done]);
 
   const set = (k: keyof Data) => (v: string) => {

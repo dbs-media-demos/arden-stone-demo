@@ -2,16 +2,11 @@
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, useGSAP);
+  gsap.registerPlugin(ScrollTrigger);
   gsap.defaults({ ease: "expo.out", duration: 1.1 });
 }
-
-export const prefersReducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-export const isTouch = () => typeof window !== "undefined" && window.matchMedia("(hover: none), (pointer: coarse)").matches;
 
 /** True while the element's top edge is still below the fold (safe to hide for a reveal). */
 export const belowFold = (el: Element) => el.getBoundingClientRect().top > window.innerHeight * 0.92;
@@ -30,4 +25,4 @@ export function whenIdle(cb: () => void, timeout = 1200) {
   return () => clearTimeout(id);
 }
 
-export { gsap, ScrollTrigger, useGSAP };
+export { gsap, ScrollTrigger };

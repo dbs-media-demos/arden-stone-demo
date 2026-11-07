@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useBiz } from "./BizContext";
+import { QUOTE_PREFILL } from "@/components/sections/QuoteForm";
 
 /**
  * A preview is the homepage only. Links to the concept site's other pages stay put and say
@@ -29,6 +30,13 @@ export function PreviewGuard() {
       e.stopPropagation();
       if (url.pathname === "/") {
         window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      // Phones have the form right here on the page
+      const quote = url.pathname === "/contact" ? document.getElementById("quote") : null;
+      if (quote && quote.offsetHeight > 0) {
+        window.dispatchEvent(new CustomEvent(QUOTE_PREFILL, { detail: url.search }));
+        quote.scrollIntoView();
         return;
       }
       setNote(biz.lang === "sr" ? "Ta stranica dolazi uz kompletan sajt." : `That page comes with the full ${biz.shortName} site.`);

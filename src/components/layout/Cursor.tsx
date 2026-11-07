@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { loadKit, prefersReducedMotion } from "@/lib/motion";
 
 /**
  * A soft ring that trails the pointer and grows into a labelled disc over
@@ -14,12 +14,16 @@ export function Cursor() {
   useEffect(() => {
     const el = ref.current;
     if (!el || !window.matchMedia("(hover: hover) and (pointer: fine)").matches || prefersReducedMotion()) return;
-    const x = gsap.quickTo(el, "x", { duration: 0.45, ease: "power3" });
-    const y = gsap.quickTo(el, "y", { duration: 0.45, ease: "power3" });
+    let x: ((v: number) => void) | undefined;
+    let y: ((v: number) => void) | undefined;
+    void loadKit().then(({ gsap }) => {
+      x = gsap.quickTo(el, "x", { duration: 0.45, ease: "power3" });
+      y = gsap.quickTo(el, "y", { duration: 0.45, ease: "power3" });
+    });
     let current: string | null = null;
     const move = (e: PointerEvent) => {
-      x(e.clientX);
-      y(e.clientY);
+      x?.(e.clientX);
+      y?.(e.clientY);
       const target = (e.target as Element | null)?.closest?.("[data-cursor]");
       const next = target?.getAttribute("data-cursor") || null;
       if (next !== current) {

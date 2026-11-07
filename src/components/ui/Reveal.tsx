@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, type CSSProperties, type ElementType, type ReactNode } from "react";
+import { Fragment, useRef, type CSSProperties, type ElementType, type ReactNode } from "react";
 import clsx from "clsx";
 import type { SplitText } from "gsap/SplitText";
-import { belowFold, gsap, prefersReducedMotion, ScrollTrigger, useGSAP, whenIdle } from "@/lib/gsap";
+import { prefersReducedMotion, useDesktopGSAP, type MotionKit } from "@/lib/motion";
 
 /*
  * Scroll-driven reveals.
@@ -14,7 +14,7 @@ import { belowFold, gsap, prefersReducedMotion, ScrollTrigger, useGSAP, whenIdle
 
 // SplitText is only fetched once the page is idle and a split heading exists below the fold.
 let splitText: Promise<typeof SplitText> | null = null;
-const loadSplitText = () =>
+const loadSplitText = (gsap: MotionKit["gsap"]) =>
   (splitText ??= import("gsap/SplitText").then((m) => {
     gsap.registerPlugin(m.SplitText);
     return m.SplitText;
@@ -36,14 +36,14 @@ type SplitProps = {
 export function SplitReveal({ children, as: Tag = "h2", className, delay = 0, immediate, stagger = 0.08, id }: SplitProps) {
   const ref = useRef<HTMLElement>(null);
 
-  useGSAP(
-    (_ctx, contextSafe) => {
+  useDesktopGSAP(
+    ({ belowFold, gsap, whenIdle }, contextSafe) => {
       const el = ref.current;
       if (!el || immediate || prefersReducedMotion()) return;
       let split: SplitText | null = null;
       let io: IntersectionObserver | null = null;
       let alive = true;
-      const run = contextSafe!((ST: typeof SplitText) => {
+      const run = contextSafe((ST: typeof SplitText) => {
         if (!alive) return;
         split = ST.create(el, {
           type: "lines",
@@ -55,10 +55,10 @@ export function SplitReveal({ children, as: Tag = "h2", className, delay = 0, im
           },
         });
       });
-      const setup = contextSafe!(() => {
+      const setup = contextSafe(() => {
         if (!belowFold(el)) return;
         gsap.set(el, { opacity: 0 });
-        const loading = loadSplitText();
+        const loading = loadSplitText(gsap);
         io = new IntersectionObserver(
           ([entry]) => {
             if (!entry.isIntersecting) return;
@@ -102,12 +102,12 @@ type RevealProps = {
 export function Reveal({ children, as: Tag = "div", className, delay = 0, y = 36, stagger, immediate, id }: RevealProps) {
   const ref = useRef<HTMLElement>(null);
 
-  useGSAP(
-    (_ctx, contextSafe) => {
+  useDesktopGSAP(
+    ({ belowFold, gsap, ScrollTrigger, whenIdle }, contextSafe) => {
       const el = ref.current;
       if (!el || immediate || prefersReducedMotion()) return;
       return whenIdle(
-        contextSafe!(() => {
+        contextSafe(() => {
           if (!belowFold(el)) return;
           const targets = stagger ? Array.from(el.children) : [el];
           gsap.set(targets, { opacity: 0, y });
@@ -134,12 +134,12 @@ export function Reveal({ children, as: Tag = "div", className, delay = 0, y = 36
 export function ScrubWords({ text, className, as: Tag = "p" }: { text: string; className?: string; as?: ElementType }) {
   const ref = useRef<HTMLElement>(null);
 
-  useGSAP(
-    (_ctx, contextSafe) => {
+  useDesktopGSAP(
+    ({ gsap, whenIdle }, contextSafe) => {
       const el = ref.current;
       if (!el || prefersReducedMotion()) return;
       return whenIdle(
-        contextSafe!(() => {
+        contextSafe(() => {
           const words = el.querySelectorAll<HTMLElement>("[data-w]:not(.italic)");
           // Starts at 0.62 opacity so even the faded words keep 4.5:1 contrast so the large text stays readable before scrolling.
           gsap.fromTo(
@@ -180,13 +180,13 @@ export function Parallax({
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    (_ctx, contextSafe) => {
+  useDesktopGSAP(
+    ({ belowFold, gsap, whenIdle }, contextSafe) => {
       const el = ref.current;
       const inner = el?.firstElementChild as HTMLElement | null;
       if (!el || !inner || prefersReducedMotion()) return;
       return whenIdle(
-        contextSafe!(() => {
+        contextSafe(() => {
           gsap.set(inner, { scale: 1 + amount / 100 });
           gsap.fromTo(
             inner,
@@ -218,9 +218,11 @@ export function Lines({ lines, className, delay = 0, as: Tag = "span" }: { lines
   return (
     <Tag className={clsx("lines block", className)} style={delayStyle(delay)}>
       {lines.map((l, i) => (
-        <span key={i} className="ln" style={{ "--i": i } as CSSProperties}>
-          <span>{l}</span>
-        </span>
+        <Fragment key={i}>
+          <span className="ln" style={{ "--i": i } as CSSProperties}>
+            <span>{l}</span>
+          </span>{" "}
+        </Fragment>
       ))}
     </Tag>
   );

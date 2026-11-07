@@ -22,6 +22,8 @@ import { SERVICES } from "@/data/services";
 import { FAQS, MATERIALS, STAGES, STATS, TRUST } from "@/data/studio";
 import { pic } from "@/lib/images";
 import { PreviewMap } from "@/components/preview/PreviewMap";
+import { PhoneTeam, QuoteSection } from "@/components/sections/PhoneSections";
+import { sr as srDict } from "@/i18n/sr";
 import { defaultBiz } from "@/lib/biz";
 import { L, openDays, telOf, type Biz } from "@/lib/biz-core";
 
@@ -57,15 +59,22 @@ const PREVIEW_FAQS = [0, 3, 5, 7, 9];
 export const homeFaqs = FAQS.slice(0, 5);
 
 /**
+ * Phones reorder the page with CSS for project work: gallery by type (with the before/after slider),
+ * reviews naming the project, how it works, the budget guide, the team, the form. Desktop keeps this
+ * file's order and never shows the phone-only team and form.
+ *
  * The homepage sections. The concept site renders them as they are; a personalised preview
  * (/for/<token>) passes a real business: its name, phone, hours, rating and a map of its address
  * replace Arden & Stone's, and Dallas places, prices and credentials step aside. Serbian previews
- * are translated (i18n/sr; hero and statement in code) and skip the dollar cost estimator.
+ * are translated (i18n/sr; the first screen and the gallery heading already in the server's HTML)
+ * and skip the dollar cost estimator.
  */
 export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; children?: ReactNode }) {
   const linen = projectBySlug("the-linen-kitchen")!;
   const catLabel = (id: string) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
   const sr = biz.lang === "sr";
+  // What the first screen shows (and the section peeking into it) can't wait for Translate.
+  const t = (s: string) => (sr ? (srDict[s] ?? s) : s);
   const slides = biz.preview ? SLIDES.map((s) => ({ ...s, place: biz.area })) : SLIDES;
   const days = openDays(biz);
   const stats = biz.preview
@@ -78,20 +87,46 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
     : STATS;
   const projects = biz.preview ? PROJECTS.filter((p) => !PREVIEW_PROJECT_SKIP.includes(p.slug)) : PROJECTS;
   const faqs = biz.preview ? PREVIEW_FAQS.map((i) => FAQS[i]) : homeFaqs;
+  const lede = biz.preview
+    ? L(
+        biz,
+        `Architects, designers and makers under one roof. We renovate homes across ${biz.area}, from the first pencil line to the final coat of wax.`,
+        "Projektanti, dizajneri i majstori pod jednim krovom. Renoviramo domove od prve linije olovkom do poslednjeg sloja voska.",
+      )
+    : "Architects, designers and makers under one roof. We renovate homes across Highland Park, Preston Hollow and DFW, from the first pencil line to the final coat of wax.";
 
   return (
     <PageShell>
       {children}
-
+      <div className="home-flow">
       {/* ───────── Hero ───────── */}
       <HeroSketch
         slides={slides}
         footer={
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line py-5 lg:border-0 lg:py-6">
-            <RatingPill />
-            <OpenBadge className="text-muted" />
+          <div className="hero-facts flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line py-5 lg:border-0 lg:py-6">
+            <span className="contents phone:hidden">
+              <RatingPill />
+            </span>
+            <span className="hidden phone:contents">
+              <RatingPill href="#reviews" />
+            </span>
             {biz.phone && (
-              <a href={telOf(biz)} className="label link-draw tabular">
+              <a href={telOf(biz)} className="btn btn-solid hero-call hidden phone:inline-flex">
+                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden>
+                  <path
+                    d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                  />
+                </svg>
+                <span>{t("Call")}</span>
+                <span className="tabular">{biz.phoneDisplay}</span>
+              </a>
+            )}
+            <OpenBadge className="hero-open text-muted" />
+            {biz.phone && (
+              <a href={telOf(biz)} className="label link-draw tabular phone:hidden">
                 {biz.phoneDisplay}
               </a>
             )}
@@ -102,8 +137,20 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
           <span className="eyebrow anim-fade mb-4 md:mb-7" style={{ "--d": "0.1s" } as React.CSSProperties}>
             {biz.preview ? L(biz, `Design-build renovation studio · ${biz.area}`, `Projektovanje i renoviranje · ${biz.area}`) : "Dallas design-build renovation studio"}
           </span>
+          {/* Phones lead with the service and the town */}
+          <span className="hero-service hidden font-display phone:block">
+            {sr ? (
+              <>
+                Renoviranje domova, <em className="italic-accent">{biz.area}.</em>
+              </>
+            ) : (
+              <>
+                Home renovation in <em className="italic-accent">{biz.area}.</em>
+              </>
+            )}
+          </span>
           <Lines
-            className="mt-3 font-display text-[clamp(3.1rem,6.1vw,7.4rem)] md:mt-6 leading-[0.92] tracking-[-0.03em]"
+            className="hero-lines mt-3 font-display text-[clamp(3.1rem,6.1vw,7.4rem)] md:mt-6 leading-[0.92] tracking-[-0.03em]"
             delay={0.15}
             lines={
               sr
@@ -124,33 +171,27 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
             }
           />
         </h1>
-        <p className="lede anim-fade mt-5 max-w-md max-md:text-base md:mt-8" style={{ "--d": "0.5s" } as React.CSSProperties}>
-          {biz.preview
-            ? L(
-                biz,
-                `Architects, designers and makers under one roof. We renovate homes across ${biz.area}, from the first pencil line to the final coat of wax.`,
-                "Projektanti, dizajneri i majstori pod jednim krovom. Renoviramo domove od prve linije olovkom do poslednjeg sloja voska.",
-              )
-            : "Architects, designers and makers under one roof. We renovate homes across Highland Park, Preston Hollow and DFW, from the first pencil line to the final coat of wax."}
+        <p className="lede anim-fade mt-5 max-w-md max-md:text-base md:mt-8 phone:hidden" style={{ "--d": "0.5s" } as React.CSSProperties}>
+          {lede}
         </p>
-        <div className="anim-fade mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 md:mt-9" style={{ "--d": "0.65s" } as React.CSSProperties}>
-          <Button href="/contact">Book a consultation</Button>
-          <TextLink href="/work">See the work</TextLink>
+        <div className="anim-fade mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 md:mt-9 phone:hidden" style={{ "--d": "0.65s" } as React.CSSProperties}>
+          <Button href="/contact">{t("Book a consultation")}</Button>
+          <TextLink href="/work">{t("See the work")}</TextLink>
         </div>
       </HeroSketch>
 
       {/* ───────── Statement + numbers ───────── */}
-      <section className="shell py-28 md:py-44" aria-labelledby="studio-title">
-        <div className="grid gap-12 lg:grid-cols-12">
-          <div className="lg:col-span-3">
+      <section className="shell py-28 md:py-44 phone:order-9 phone:py-6" aria-labelledby="studio-title">
+        <div className="grid gap-12 phone:gap-3 lg:grid-cols-12">
+          <div className="lg:col-span-3 phone:flex phone:items-center phone:justify-between">
             <p id="studio-title" className="eyebrow">
               The studio
             </p>
-            <ScaleBar className="mt-6" />
+            <ScaleBar className="mt-6 phone:mt-0" />
           </div>
           <div className="lg:col-span-9">
             <ScrubWords
-              className="display-m text-pretty"
+              className="display-m statement text-pretty"
               text={
                 biz.preview
                   ? L(
@@ -161,13 +202,14 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
                   : "We draw your home, build it in our own Design District workshop, and hand you the keys to a house that feels as if it had *always *been *this *way. One team, one contract, one number to call."
               }
             />
-            <dl className="mt-20 grid grid-cols-2 gap-x-6 gap-y-12 border-t border-line pt-10 md:grid-cols-4">
+            <p className="lede mt-2.5 hidden phone:block phone:text-[0.9375rem]">{lede}</p>
+            <dl className="mt-20 grid grid-cols-2 gap-x-6 gap-y-12 border-t border-line pt-10 phone:mt-5 phone:grid-cols-2 phone:gap-x-4 phone:gap-y-4 phone:pt-4 md:grid-cols-4">
               {stats.map((s) => (
                 <div key={s.label}>
-                  <dd className="font-display text-[clamp(3rem,6vw,5.5rem)] leading-none tabular">
+                  <dd className="font-display text-[clamp(3rem,6vw,5.5rem)] leading-none tabular phone:text-[2.5rem]">
                     <Counter value={s.value} suffix={s.suffix} />
                   </dd>
-                  <dt className="label mt-3 text-faint">{s.label}</dt>
+                  <dt className="label mt-3 text-faint phone:mt-1">{s.label}</dt>
                 </div>
               ))}
             </dl>
@@ -176,7 +218,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </section>
 
       {/* ───────── Before / after ───────── */}
-      <section className="theme-stone py-24 md:py-36" aria-labelledby="ba-title">
+      <section className="theme-stone py-24 md:py-36 phone:order-2 phone:py-6" aria-labelledby="ba-title">
         <div className="shell">
           <SectionHead
             align="split"
@@ -189,17 +231,17 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
           >
             {linen.beforeAfter!.caption} Drag the line to compare.
           </SectionHead>
-          <Reveal className="mt-14">
+          <Reveal className="mt-14 phone:mt-3.5">
             <BeforeAfter
               before={pic(linen.beforeAfter!.before.key, linen.beforeAfter!.before.alt)}
               after={pic(linen.beforeAfter!.after.key, linen.beforeAfter!.after.alt)}
               beforeLabel="1984"
               afterLabel="2024"
-              className="aspect-[4/5] w-full rounded-sm sm:aspect-[16/10] lg:aspect-[16/8]"
-              sizes="(min-width: 1680px) 1580px, 94vw"
+              className="aspect-[4/5] w-full rounded-sm phone:aspect-[3/2] sm:aspect-[16/10] lg:aspect-[16/8]"
+              sizes="(min-width: 1680px) 1580px, (max-width: 767.98px) 62vw, 94vw"
             />
           </Reveal>
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-4 phone:mt-3 phone:gap-2">
             <p className="label text-faint">
               {biz.preview ? linen.title : `${linen.title} · ${linen.duration} · ${linen.budget}`}
             </p>
@@ -209,7 +251,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </section>
 
       {/* ───────── Services stack ───────── */}
-      <section className="shell py-24 md:py-36" aria-labelledby="services-title">
+      <section className="shell py-24 md:py-36 phone:order-4 phone:py-6" aria-labelledby="services-title">
         <SectionHead
           align="split"
           eyebrow="What we do"
@@ -221,7 +263,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
         >
           Nothing gets lost between the drawing and the build, because the same people do both.
         </SectionHead>
-        <div className="mt-16">
+        <div className="mt-16 phone:mt-4">
           <ServiceStack
             items={SERVICES.map((s) => ({
               href: `/services/${s.slug}`,
@@ -238,25 +280,30 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
 
       {/* ───────── Selected work (horizontal) ───────── */}
       <ProjectReel
+        className="phone:order-1"
+        trFirst={sr}
+        types={CATEGORIES.map((c) => ({ id: c.id, label: t(c.label) }))}
+        allLabel={L(biz, "All", "Sve")}
         items={projects.map((p) => ({
           slug: p.slug,
-          title: p.title,
+          title: t(p.title),
           area: biz.preview ? biz.area : p.area,
           year: p.year,
-          tag: catLabel(p.categories[0]),
-          image: pic(p.hero.key, p.hero.alt),
+          tag: t(catLabel(p.categories[0])),
+          types: p.categories,
+          image: pic(p.hero.key, t(p.hero.alt)),
         }))}
         intro={
           <>
-            <p className="eyebrow mb-6">Selected work · 2023 – 2025</p>
+            <p className="eyebrow mb-6 phone:mb-2.5">{t("Selected work · 2023 – 2025")}</p>
             <h2 id="reel-title" className="display-xl">
-              Homes we&rsquo;ve <em className="italic-accent">drawn</em> and built.
+              {t("Homes we’ve")} <em className="italic-accent">{t("drawn")}</em> {t("and built.")}
             </h2>
-            <p className="lede mt-6 max-w-sm">
+            <p className="lede mt-6 max-w-sm phone:mt-2 phone:max-w-none">
               {biz.preview ? L(biz, "Recent projects. Scroll sideways through the sheets.", "Nedavni projekti. Prelistajte listove u stranu.") : "Nine recent projects across Dallas and Fort Worth. Scroll sideways through the sheets."}
             </p>
-            <div className="mt-8">
-              <TextLink href="/work">All projects</TextLink>
+            <div className="mt-8 phone:mt-2.5">
+              <TextLink href="/work">{t("All projects")}</TextLink>
             </div>
           </>
         }
@@ -264,14 +311,15 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
 
       {/* ───────── Journey (pinned) ───────── */}
       <Journey
+        className="phone:order-5"
         stages={STAGES.map((s) => ({ ...s, image: pic(s.image.key, s.image.alt) }))}
         heading={
           <div>
-            <p className="eyebrow mb-6">The renovation journey</p>
+            <p className="eyebrow mb-6 phone:mb-2.5">The renovation journey</p>
             <h2 id="journey-title" className="display-l">
               From a first visit to a finished home, <em className="italic-accent">in five stages.</em>
             </h2>
-            <div className="mt-8">
+            <div className="mt-8 phone:mt-2.5">
               <TextLink href="/process" className="text-ivory">
                 How we work
               </TextLink>
@@ -281,8 +329,8 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       />
 
       {/* ───────── Workshop film ───────── */}
-      <WorkshopFilm>
-        <p className="eyebrow mb-6">{biz.preview ? L(biz, "The workshop", "Radionica") : "The workshop · Design District"}</p>
+      <WorkshopFilm className="phone:order-7">
+        <p className="eyebrow mb-6 phone:mb-2.5">{biz.preview ? L(biz, "The workshop", "Radionica") : "The workshop · Design District"}</p>
         <p className="display-l max-w-4xl">
           {biz.preview ? (
             sr ? (
@@ -303,8 +351,8 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </WorkshopFilm>
 
       {/* ───────── Materials ───────── */}
-      <section className="py-24 md:py-32" aria-labelledby="materials-title">
-        <div className="shell mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+      <section className="py-24 md:py-32 phone:order-8 phone:py-6" aria-labelledby="materials-title">
+        <div className="shell mb-12 flex flex-col gap-6 phone:mb-4 phone:flex-col phone:items-start phone:gap-2 md:flex-row md:items-end md:justify-between">
           <SplitReveal id="materials-title" className="display-l max-w-3xl">
             Materials chosen to <em className="italic-accent">age,</em> not just to photograph.
           </SplitReveal>
@@ -316,7 +364,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       {!sr && (
         <>
           {/* ───────── Estimator ───────── */}
-          <section className="theme-stone py-24 md:py-36" aria-labelledby="estimate-title">
+          <section className="theme-stone py-24 md:py-36 phone:order-6 phone:py-6" aria-labelledby="estimate-title">
             <div className="shell">
               <SectionHead
                 align="split"
@@ -328,11 +376,11 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
                 }
               >
                 An honest range in ten seconds, based on what Dallas renovations really cost in 2026.{" "}
-                <TextLink href="/estimate" className="mt-4 text-fg">
+                <TextLink href="/estimate" className="mt-4 text-fg phone:mt-1.5">
                   Full estimator
                 </TextLink>
               </SectionHead>
-              <div className="mt-16">
+              <div className="mt-16 phone:mt-4">
                 <Estimator compact />
               </div>
             </div>
@@ -341,16 +389,16 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       )}
 
       {/* ───────── Reviews ───────── */}
-      <section className="py-24 md:py-36" aria-labelledby="reviews-title">
-        <div className="shell mb-12">
-          <p className="eyebrow mb-6">Reviews</p>
+      <section id="reviews" className="py-24 md:py-36 phone:order-3 phone:py-6" aria-labelledby="reviews-title">
+        <div className="shell mb-12 phone:mb-3">
+          <p className="eyebrow mb-6 phone:mb-2.5">Reviews</p>
           <SplitReveal id="reviews-title" className="display-l max-w-3xl">
             Judged at twelve months, <em className="italic-accent">not at handover.</em>
           </SplitReveal>
         </div>
         <ReviewsRow biz={biz} />
-        <div className="shell mt-16">
-          <ul className="flex flex-wrap gap-x-8 gap-y-3 border-t border-line pt-8">
+        <div className="shell mt-16 phone:mt-1.5 phone:has-[ul:empty]:hidden">
+          <ul className="swipe swipe-trust flex flex-wrap gap-x-8 gap-y-3 border-t border-line pt-8 phone:flex-nowrap phone:gap-x-4 phone:pt-2.5 phone:whitespace-nowrap">
             {(biz.preview ? [] : TRUST).map((t) => (
               <li key={t} className="label text-muted">
                 {t}
@@ -361,21 +409,21 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </section>
 
       {biz.preview ? (
-        <PreviewMap biz={biz} />
+        <PreviewMap biz={biz} className="phone:order-12 phone:py-6" />
       ) : (
         <>
           {/* ───────── Areas ───────── */}
-          <section className="theme-stone py-24 md:py-36" aria-labelledby="areas-title">
-            <div className="shell grid gap-14 lg:grid-cols-12">
+          <section className="theme-stone py-24 md:py-36 phone:order-12 phone:py-6" aria-labelledby="areas-title">
+            <div className="shell grid gap-14 phone:grid-cols-[minmax(0,1fr)] phone:gap-3 lg:grid-cols-12">
               <div className="lg:col-span-4">
-                <p className="eyebrow mb-6">Where we work</p>
+                <p className="eyebrow mb-6 phone:mb-2.5">Where we work</p>
                 <SplitReveal id="areas-title" className="display-l">
                   Dallas, the Park Cities <em className="italic-accent">&amp; beyond.</em>
                 </SplitReveal>
-                <p className="lede mt-6">
+                <p className="lede mt-6 phone:mt-2">
                   A dedicated site lead on every job, never more than forty minutes from the workshop. We know the review boards, the inspectors and the soil.
                 </p>
-                <div className="mt-8">
+                <div className="mt-8 phone:mt-2.5">
                   <TextLink href="/areas">Service areas</TextLink>
                 </div>
               </div>
@@ -388,13 +436,13 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       )}
 
       {/* ───────── FAQ ───────── */}
-      <section className="shell grid gap-14 py-24 md:py-36 lg:grid-cols-12" aria-labelledby="faq-title">
+      <section className="shell grid gap-14 py-24 md:py-36 phone:order-11 phone:gap-3 phone:py-6 lg:grid-cols-12" aria-labelledby="faq-title">
         <div className="lg:col-span-4">
-          <p className="eyebrow mb-6">Questions</p>
+          <p className="eyebrow mb-6 phone:mb-2.5">Questions</p>
           <SplitReveal id="faq-title" className="display-l">
             Good to <em className="italic-accent">know.</em>
           </SplitReveal>
-          <div className="mt-8">
+          <div className="mt-8 phone:mt-2.5">
             <TextLink href="/faq">All questions</TextLink>
           </div>
         </div>
@@ -402,6 +450,10 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
           <FaqList items={faqs} />
         </div>
       </section>
+
+      <PhoneTeam biz={biz} className="phone:order-10" />
+      <QuoteSection biz={biz} className="phone:order-13" />
+      </div>
     </PageShell>
   );
 }

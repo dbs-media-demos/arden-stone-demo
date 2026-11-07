@@ -2,15 +2,15 @@
 
 import Image from "next/image";
 import { useRef, type ReactNode } from "react";
-import { gsap, isTouch, prefersReducedMotion, useGSAP } from "@/lib/gsap";
+import { isTouch, prefersReducedMotion, useDesktopGSAP } from "@/lib/motion";
 import type { Pic } from "@/lib/images";
 
 /** Photos that bloom and fall away behind the pointer as it crosses the area (desktop). */
 export function ImageTrail({ pics, children, className }: { pics: Pic[]; children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useGSAP(
-    () => {
+  useDesktopGSAP(
+    ({ gsap }) => {
       const root = ref.current;
       if (!root || isTouch() || prefersReducedMotion()) return;
       const items = Array.from(root.querySelectorAll<HTMLElement>("[data-trail]"));
@@ -40,7 +40,7 @@ export function ImageTrail({ pics, children, className }: { pics: Pic[]; childre
 
   return (
     <div ref={ref} className={className}>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden still:hidden" aria-hidden>
         {pics.map((p) => (
           <div key={p.src} data-trail className="absolute top-0 left-0 aspect-[4/5] w-44 overflow-hidden opacity-0 md:w-56">
             <Image src={p.src} alt="" fill sizes="224px" quality={60} className="object-cover" />

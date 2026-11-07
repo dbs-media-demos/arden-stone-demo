@@ -21,13 +21,9 @@ export default async function PreviewLayout({ children, params }: { children: Re
   if (!biz) notFound();
   const dict = biz.lang === "sr" ? sr : enPreview;
   return (
-    <BizProvider biz={biz}>
-      {(biz.lang === "sr" || Object.keys(dict).length > 0) && (
-        <>
-          <style>{translateGateCss}</style>
-          <Translate dict={dict} />
-        </>
-      )}
+    <BizProvider biz={biz} dict={biz.lang === "sr" ? sr : null}>
+      {biz.lang === "sr" && <style>{translateGateCss}</style>}
+      {(biz.lang === "sr" || Object.keys(dict).length > 0) && <Translate dict={dict} />}
       <SiteChrome biz={biz}>{children}</SiteChrome>
       <PreviewGuard />
     </BizProvider>
