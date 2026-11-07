@@ -47,6 +47,9 @@ export const openDays = (biz: Pick<Biz, "hours">) => biz.hours?.filter((h) => h.
 /** Pick the English or Serbian version of a line written in code (names, numbers inside). */
 export const L = (biz: Pick<Biz, "lang">, en: string, sr: string) => (biz.lang === "sr" ? sr : en);
 
+/** 12400 → "12,400", for what renders during hydration: a phone's first toLocaleString call stalls it for tens of ms. */
+export const commas = (n: number) => String(n).replace(/\B(?=(\d{3})+$)/g, ",");
+
 /** 4.9 → "4,9" in Serbian */
 export const num = (biz: Pick<Biz, "lang">, n: number) => (biz.lang === "sr" ? String(n).replace(".", ",") : String(n));
 

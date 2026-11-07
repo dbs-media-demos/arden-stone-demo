@@ -181,7 +181,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </HeroSketch>
 
       {/* ───────── Statement + numbers ───────── */}
-      <section className="shell py-28 md:py-44 phone:order-9 phone:py-6" aria-labelledby="studio-title">
+      <section className="cv [--cv:445px] shell py-28 md:py-44 phone:order-9 phone:py-6" aria-labelledby="studio-title">
         <div className="grid gap-12 phone:gap-3 lg:grid-cols-12">
           <div className="lg:col-span-3 phone:flex phone:items-center phone:justify-between">
             <p id="studio-title" className="eyebrow">
@@ -218,7 +218,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </section>
 
       {/* ───────── Before / after ───────── */}
-      <section className="theme-stone py-24 md:py-36 phone:order-2 phone:py-6" aria-labelledby="ba-title">
+      <section className="cv [--cv:448px] theme-stone py-24 md:py-36 phone:order-2 phone:py-6" aria-labelledby="ba-title">
         <div className="shell">
           <SectionHead
             align="split"
@@ -251,7 +251,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </section>
 
       {/* ───────── Services stack ───────── */}
-      <section className="shell py-24 md:py-36 phone:order-4 phone:py-6" aria-labelledby="services-title">
+      <section className="cv [--cv:565px] shell py-24 md:py-36 phone:order-4 phone:py-6" aria-labelledby="services-title">
         <SectionHead
           align="split"
           eyebrow="What we do"
@@ -280,7 +280,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
 
       {/* ───────── Selected work (horizontal) ───────── */}
       <ProjectReel
-        className="phone:order-1"
+        className="cv [--cv:567px] phone:order-1"
         trFirst={sr}
         types={CATEGORIES.map((c) => ({ id: c.id, label: t(c.label) }))}
         allLabel={L(biz, "All", "Sve")}
@@ -311,7 +311,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
 
       {/* ───────── Journey (pinned) ───────── */}
       <Journey
-        className="phone:order-5"
+        className="cv [--cv:659px] phone:order-5"
         stages={STAGES.map((s) => ({ ...s, image: pic(s.image.key, s.image.alt) }))}
         heading={
           <div>
@@ -329,7 +329,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       />
 
       {/* ───────── Workshop film ───────── */}
-      <WorkshopFilm className="phone:order-7">
+      <WorkshopFilm className="cv [--cv:288px] phone:order-7">
         <p className="eyebrow mb-6 phone:mb-2.5">{biz.preview ? L(biz, "The workshop", "Radionica") : "The workshop · Design District"}</p>
         <p className="display-l max-w-4xl">
           {biz.preview ? (
@@ -351,7 +351,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </WorkshopFilm>
 
       {/* ───────── Materials ───────── */}
-      <section className="py-24 md:py-32 phone:order-8 phone:py-6" aria-labelledby="materials-title">
+      <section className="cv [--cv:264px] py-24 md:py-32 phone:order-8 phone:py-6" aria-labelledby="materials-title">
         <div className="shell mb-12 flex flex-col gap-6 phone:mb-4 phone:flex-col phone:items-start phone:gap-2 md:flex-row md:items-end md:justify-between">
           <SplitReveal id="materials-title" className="display-l max-w-3xl">
             Materials chosen to <em className="italic-accent">age,</em> not just to photograph.
@@ -364,7 +364,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       {!sr && (
         <>
           {/* ───────── Estimator ───────── */}
-          <section className="theme-stone py-24 md:py-36 phone:order-6 phone:py-6" aria-labelledby="estimate-title">
+          <section className="cv [--cv:911px] theme-stone py-24 md:py-36 phone:order-6 phone:py-6" aria-labelledby="estimate-title">
             <div className="shell">
               <SectionHead
                 align="split"
@@ -389,7 +389,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       )}
 
       {/* ───────── Reviews ───────── */}
-      <section id="reviews" className="py-24 md:py-36 phone:order-3 phone:py-6" aria-labelledby="reviews-title">
+      <section id="reviews" className="cv [--cv:1308px] py-24 md:py-36 phone:order-3 phone:py-6" aria-labelledby="reviews-title">
         <div className="shell mb-12 phone:mb-3">
           <p className="eyebrow mb-6 phone:mb-2.5">Reviews</p>
           <SplitReveal id="reviews-title" className="display-l max-w-3xl">
@@ -409,11 +409,11 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </section>
 
       {biz.preview ? (
-        <PreviewMap biz={biz} className="phone:order-12 phone:py-6" />
+        <PreviewMap biz={biz} className="cv [--cv:562px] phone:order-12 phone:py-6" />
       ) : (
         <>
           {/* ───────── Areas ───────── */}
-          <section className="theme-stone py-24 md:py-36 phone:order-12 phone:py-6" aria-labelledby="areas-title">
+          <section className="cv [--cv:562px] theme-stone py-24 md:py-36 phone:order-12 phone:py-6" aria-labelledby="areas-title">
             <div className="shell grid gap-14 phone:grid-cols-[minmax(0,1fr)] phone:gap-3 lg:grid-cols-12">
               <div className="lg:col-span-4">
                 <p className="eyebrow mb-6 phone:mb-2.5">Where we work</p>
@@ -436,7 +436,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       )}
 
       {/* ───────── FAQ ───────── */}
-      <section className="shell grid gap-14 py-24 md:py-36 phone:order-11 phone:gap-3 phone:py-6 lg:grid-cols-12" aria-labelledby="faq-title">
+      <section className="cv [--cv:521px] shell grid gap-14 py-24 md:py-36 phone:order-11 phone:gap-3 phone:py-6 lg:grid-cols-12" aria-labelledby="faq-title">
         <div className="lg:col-span-4">
           <p className="eyebrow mb-6 phone:mb-2.5">Questions</p>
           <SplitReveal id="faq-title" className="display-l">
@@ -451,8 +451,8 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
         </div>
       </section>
 
-      <PhoneTeam biz={biz} className="phone:order-10" />
-      <QuoteSection biz={biz} className="phone:order-13" />
+      <PhoneTeam biz={biz} className="cv [--cv:352px] phone:order-10" />
+      <QuoteSection biz={biz} className="cv [--cv:458px] phone:order-13" />
       </div>
     </PageShell>
   );

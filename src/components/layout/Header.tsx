@@ -28,8 +28,16 @@ export function Header() {
   const [hidden, setHidden] = useState(false);
   const [solid, setSolid] = useState(false);
   const [hover, setHover] = useState<string>("/work");
+  const [settled, setSettled] = useState(false);
   const lastY = useRef(0);
   const toggleRef = useRef<HTMLButtonElement>(null);
+
+  // Phones keep the closed menu out of the first layout (.menu-waiting); laid out at idle, so its first opening still animates.
+  useEffect(() => {
+    const hasIdle = "requestIdleCallback" in window;
+    const id = hasIdle ? window.requestIdleCallback(() => setSettled(true), { timeout: 2500 }) : window.setTimeout(() => setSettled(true), 1800);
+    return () => (hasIdle ? window.cancelIdleCallback(id) : window.clearTimeout(id));
+  }, []);
 
   // Hide on scroll down, reveal on scroll up; gain a backdrop once away from the top.
   useEffect(() => {
@@ -136,6 +144,7 @@ export function Header() {
         className={clsx(
           "theme-ink fixed inset-0 z-40 flex flex-col overflow-y-auto transition-[clip-path] duration-[900ms] ease-[var(--ease-in-out-quart)] lg:hidden",
           open ? "[clip-path:inset(0_0_0_0)]" : "[clip-path:inset(0_0_100%_0)]",
+          !settled && !open && "menu-waiting",
         )}
       >
         {open && (

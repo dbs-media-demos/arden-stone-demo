@@ -714,6 +714,35 @@
   .home-flow > * {
     min-width: 0;
   }
+  /* The first layout has to shape all text at once, the longest freeze of the load: whatever is off
+     screen waits until it comes near. --cv is its content height at 375 px (no padding), so the page keeps its length. */
+  .cv {
+    content-visibility: auto;
+    contain-intrinsic-size: auto var(--cv, 600px);
+  }
+  /* And not all in one frame: on the first load, what's below the first screen starts a beat later
+     (PhoneRise flags the page once it's live). If animations are off, it simply doesn't wait. */
+  html:not([data-live]) .home-flow > .cv:not(.reel) {
+    animation: cv-wait 0.24s step-end;
+  }
+  html:not([data-live]) #reviews {
+    animation-duration: 0.36s;
+  }
+  .reel-rail {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 308px;
+  }
+  html:not([data-live]) .reel-rail {
+    animation: cv-wait 0.12s step-end;
+  }
+  html[data-full] .cv,
+  html[data-full] .reel-rail {
+    content-visibility: visible;
+  }
+  /* The closed menu too, until the browser is idle (Header); then it's ready to animate open. */
+  .menu-waiting {
+    content-visibility: hidden;
+  }
 
   /* First screen: photo, service + town, rating, Call. The photo gives way, so those always fit,
      and the hero stops short of the bar so the next section peeks in. */
@@ -1042,6 +1071,12 @@
   }
 }
 
+@keyframes cv-wait {
+  from,
+  to {
+    content-visibility: hidden;
+  }
+}
 @keyframes phone-draft {
   from {
     transform: translateX(100vw);

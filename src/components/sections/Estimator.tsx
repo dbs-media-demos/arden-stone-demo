@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { estimate, EXTRAS, FINISHES, ROOMS } from "@/data/estimator";
+import { commas } from "@/lib/biz-core";
 import { prefersReducedMotion } from "@/lib/motion";
 import { Arrow } from "@/components/ui/Button";
 
@@ -83,7 +84,7 @@ export function Estimator({ compact = false }: { compact?: boolean }) {
               02 · Approximate size
             </label>
             <output htmlFor={`${id}-size`} className="font-display text-3xl tabular">
-              {size.toLocaleString("en-US")} <span className="text-lg text-muted">sq ft</span>
+              {commas(size)} <span className="text-lg text-muted">sq ft</span>
             </output>
           </div>
           <input
@@ -97,8 +98,8 @@ export function Estimator({ compact = false }: { compact?: boolean }) {
             onChange={(e) => setSize(Number(e.target.value))}
           />
           <div className="label flex justify-between text-faint tabular">
-            <span>{r.min.toLocaleString("en-US")}</span>
-            <span>{r.max.toLocaleString("en-US")}</span>
+            <span>{commas(r.min)}</span>
+            <span>{commas(r.max)}</span>
           </div>
         </div>
 

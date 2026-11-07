@@ -26,7 +26,7 @@ export function DemoBadge() {
   if (dismissed) return null;
 
   return (
-    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-3 z-[60] flex items-center overflow-hidden rounded-full border border-ivory/15 bg-ink/90 text-ivory shadow-lg backdrop-blur md:right-4 md:bottom-4 md:left-auto phone:static phone:mx-auto phone:my-3 phone:w-fit phone:max-w-[calc(100vw-2rem)] phone:bg-ink phone:shadow-none phone:backdrop-blur-none">
+    <div className="cv [--cv:36px] fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-3 z-[60] flex items-center overflow-hidden rounded-full border border-ivory/15 bg-ink/90 text-ivory shadow-lg backdrop-blur md:right-4 md:bottom-4 md:left-auto phone:static phone:mx-auto phone:my-3 phone:w-fit phone:max-w-[calc(100vw-2rem)] phone:bg-ink phone:shadow-none phone:backdrop-blur-none">
       <a href={site.agencyUrl} target="_blank" rel="noopener" className="flex min-h-9 items-center gap-2 py-2 pr-2 pl-3.5 text-[0.72rem] font-medium tracking-wide hover:text-bronze-light">
         <span className="h-1.5 w-1.5 rounded-full bg-bronze-light" aria-hidden />
         {biz.preview ? (

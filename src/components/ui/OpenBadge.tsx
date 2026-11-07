@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { openStatus } from "@/lib/biz-core";
+import { isStill } from "@/lib/motion";
 import { useBiz } from "@/components/preview/BizContext";
 
 /** Live "Open now · closes 6 pm" pill, computed in the business's time zone. Server HTML shows the neutral hours. */
@@ -15,9 +16,13 @@ export function OpenBadge({ className }: { className?: string }) {
       const s = openStatus(biz);
       setStatus(s ? { open: s.open, label: s.text } : null);
     };
-    tick();
+    // The first time zone lookup stalls a phone for tens of ms: not in the same task as hydration
+    const first = isStill() ? window.setTimeout(tick) : (tick(), 0);
     const id = window.setInterval(tick, 60_000);
-    return () => window.clearInterval(id);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(id);
+    };
   }, [biz]);
 
   if (!biz.hours) return null;

@@ -27,7 +27,7 @@ const TRAIL: ImageKey[] = [
 export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="theme-ink relative overflow-hidden pb-24 md:pb-10 phone:pb-20">
+    <footer className="cv [--cv:985px] theme-ink relative overflow-hidden pb-24 md:pb-10 phone:pb-20">
       <ImageTrail pics={TRAIL.map((k) => pic(k, ""))} className="relative">
         <div className="shell relative py-24 phone:py-8 md:py-36">
           <p className="eyebrow mb-8 phone:mb-2.5">Start with a conversation</p>
@@ -51,7 +51,7 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
         </div>
       </ImageTrail>
 
-      <div className="shell relative">
+      <div className="cv [--cv:662px] shell relative">
         <div className="hairline" />
         <div className="grid gap-12 py-16 phone:grid-cols-2 phone:gap-x-4 phone:gap-y-4 phone:py-5 sm:grid-cols-2 lg:grid-cols-12">
           <div className="phone:col-span-2 lg:col-span-4">

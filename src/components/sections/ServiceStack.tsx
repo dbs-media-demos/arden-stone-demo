@@ -40,7 +40,7 @@ export function ServiceStack({ items }: { items: StackItem[] }) {
   );
 
   return (
-    <div ref={root} className="service-stack relative">
+    <div ref={root} className="cv [--cv:421px] service-stack relative">
       {items.map((s, i) => (
         <div key={s.href} data-card className="sticky pb-6" style={{ top: `calc(var(--header-h) + ${0.5 + i * 0.9}rem)` }}>
           <div data-card-inner className="relative origin-top overflow-hidden rounded-sm bg-paper will-change-transform">

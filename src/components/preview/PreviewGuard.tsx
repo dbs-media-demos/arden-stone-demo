@@ -36,6 +36,8 @@ export function PreviewGuard() {
       const quote = url.pathname === "/contact" ? document.getElementById("quote") : null;
       if (quote && quote.offsetHeight > 0) {
         window.dispatchEvent(new CustomEvent(QUOTE_PREFILL, { detail: url.search }));
+        // Real section heights, or the jump lands off (.cv)
+        document.documentElement.dataset.full = "";
         quote.scrollIntoView();
         return;
       }

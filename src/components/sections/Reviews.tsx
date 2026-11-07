@@ -36,8 +36,8 @@ const PHONE_STACKED = 3;
 export function ReviewsRow({ count = 8, biz = defaultBiz }: { count?: number; biz?: Biz }) {
   const list = biz.preview ? REVIEWS.filter((r) => PREVIEW_REVIEWS.includes(r.name)) : REVIEWS.slice(0, count);
   const area = biz.preview ? biz.area : undefined;
-  const item = (r: Review) => (
-    <li key={r.name} className="w-[84vw] shrink-0 snap-start sm:w-[46vw] lg:w-[28vw]">
+  const item = (r: Review, stacked?: boolean) => (
+    <li key={r.name} className={clsx("w-[84vw] shrink-0 snap-start sm:w-[46vw] lg:w-[28vw]", stacked && "cv [--cv:237px]")}>
       <Card r={r} area={area} />
     </li>
   );
@@ -58,8 +58,8 @@ export function ReviewsRow({ count = 8, biz = defaultBiz }: { count?: number; bi
       </div>
       {/* On desktop both lists dissolve (display: contents), so the cards are one row. */}
       <div data-cursor="Drag" data-lenis-prevent-wheel className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto px-[var(--gutter)] pb-4 phone:mt-4 phone:block phone:overflow-visible phone:p-0" aria-label="Client reviews" role="group">
-        <ul className="contents phone:grid phone:gap-2.5 phone:px-[var(--gutter)] [&>li]:phone:w-auto">{list.slice(0, PHONE_STACKED).map(item)}</ul>
-        <ul className="contents phone:mt-2.5 phone:flex swipe swipe-wide">{list.slice(PHONE_STACKED).map(item)}</ul>
+        <ul className="contents phone:grid phone:gap-2.5 phone:px-[var(--gutter)] [&>li]:phone:w-auto">{list.slice(0, PHONE_STACKED).map((r) => item(r, true))}</ul>
+        <ul className="cv [--cv:283px] contents phone:mt-2.5 phone:flex swipe swipe-wide">{list.slice(PHONE_STACKED).map((r) => item(r))}</ul>
       </div>
     </div>
   );

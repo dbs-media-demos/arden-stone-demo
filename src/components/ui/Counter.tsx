@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { commas } from "@/lib/biz-core";
 import { prefersReducedMotion, useDesktopGSAP } from "@/lib/motion";
 
 /** Number that counts up once it scrolls into view (desktop). The final value is in the HTML; phones just show it. */
@@ -37,7 +38,7 @@ export function Counter({ value, suffix = "", prefix = "", className }: { value:
   return (
     <span ref={ref} className={className}>
       {prefix}
-      {value.toLocaleString("en-US")}
+      {commas(value)}
       {suffix}
     </span>
   );
