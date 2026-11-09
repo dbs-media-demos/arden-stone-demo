@@ -6,6 +6,7 @@ import { Estimator } from "@/components/sections/Estimator";
 import { HeroSketch, type HeroSlide } from "@/components/sections/HeroSketch";
 import { Journey } from "@/components/sections/Journey";
 import { MaterialMarquee } from "@/components/sections/MaterialMarquee";
+import { MaterialsBoard } from "@/components/fx/samples/MaterialsBoard";
 import { ProjectReel } from "@/components/sections/ProjectReel";
 import { ReviewsRow } from "@/components/sections/Reviews";
 import { ServiceStack } from "@/components/sections/ServiceStack";
@@ -27,30 +28,15 @@ import { sr as srDict } from "@/i18n/sr";
 import { defaultBiz } from "@/lib/biz";
 import { L, openDays, telOf, type Biz } from "@/lib/biz-core";
 
-const SLIDES: HeroSlide[] = [
-  {
-    photo: pic("hero/kitchen", "Renovated kitchen with a white stone island, bronze stools and a cedar ceiling"),
-    sketch: pic("hero/kitchen-sketch", ""),
-    sheet: "A-210",
-    room: "Kitchen elevation",
-    place: "Bluffview, Dallas",
-    position: "50% 62%",
-  },
-  {
-    photo: pic("hero/traditional", "Sunlit sitting room with a curved bouclé sofa, stone table and white fireplace"),
-    sketch: pic("hero/traditional-sketch", ""),
-    sheet: "A-120",
-    room: "Sitting room",
-    place: "Highland Park",
-  },
-  {
-    photo: pic("hero/living", "Symmetrical living room with twin sofas facing a linear fireplace"),
-    sketch: pic("hero/living-sketch", ""),
-    sheet: "A-110",
-    room: "Living room",
-    place: "Preston Hollow",
-  },
-];
+/** The finished kitchen the hero's 3D model is drawn from (and the photo phones lead with). */
+const SLIDE: HeroSlide = {
+  photo: pic("hero/kitchen", "Renovated kitchen with a white stone island, bronze stools and a cedar ceiling"),
+  sketch: pic("hero/kitchen-sketch", ""),
+  sheet: "A-210",
+  room: "Kitchen",
+  place: "Bluffview, Dallas",
+  position: "50% 62%",
+};
 
 /** On previews: no projects named after Dallas neighbourhoods, and FAQs that hold anywhere. */
 const PREVIEW_PROJECT_SKIP = ["preston-hollow-modern", "the-m-streets-tudor", "westover-hills-residence"];
@@ -75,7 +61,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
   const sr = biz.lang === "sr";
   // What the first screen shows (and the section peeking into it) can't wait for Translate.
   const t = (s: string) => (sr ? (srDict[s] ?? s) : s);
-  const slides = biz.preview ? SLIDES.map((s) => ({ ...s, place: biz.area })) : SLIDES;
+  const slide = biz.preview ? { ...SLIDE, place: biz.area } : SLIDE;
   const days = openDays(biz);
   const stats = biz.preview
     ? [
@@ -101,7 +87,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       <div className="home-flow">
       {/* ───────── Hero ───────── */}
       <HeroSketch
-        slides={slides}
+        slide={slide}
         footer={
           <div className="hero-facts flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line py-5 lg:border-0 lg:py-6">
             <span className="contents phone:hidden">
@@ -134,7 +120,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
         }
       >
         <h1>
-          <span className="eyebrow anim-fade mb-4 md:mb-7" style={{ "--d": "0.1s" } as React.CSSProperties}>
+          <span className="eyebrow mb-4 md:mb-7">
             {biz.preview ? L(biz, `Design-build renovation studio · ${biz.area}`, `Projektovanje i renoviranje · ${biz.area}`) : "Dallas design-build renovation studio"}
           </span>
           {/* Phones lead with the service and the town */}
@@ -151,7 +137,6 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
           </span>
           <Lines
             className="hero-lines mt-3 font-display text-[clamp(3.1rem,6.1vw,7.4rem)] md:mt-6 leading-[0.92] tracking-[-0.03em]"
-            delay={0.15}
             lines={
               sr
                 ? [
@@ -171,10 +156,10 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
             }
           />
         </h1>
-        <p className="lede anim-fade mt-5 max-w-md max-md:text-base md:mt-8 phone:hidden" style={{ "--d": "0.5s" } as React.CSSProperties}>
+        <p className="lede mt-5 max-w-md max-md:text-base md:mt-8 phone:hidden">
           {lede}
         </p>
-        <div className="anim-fade mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 md:mt-9 phone:hidden" style={{ "--d": "0.65s" } as React.CSSProperties}>
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-4 md:mt-9 phone:hidden">
           <Button href="/contact">{t("Book a consultation")}</Button>
           <TextLink href="/work">{t("See the work")}</TextLink>
         </div>
@@ -358,7 +343,13 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
           </SplitReveal>
           <p className="max-w-sm text-muted">Every palette is sampled in the light of your own rooms before anything is ordered.</p>
         </div>
-        <MaterialMarquee items={MATERIALS.map((m) => ({ pic: pic(m.key, m.name), name: m.name }))} />
+        {/* Phones and tablets: the swatch row; desktop: the same samples as a 3D board under a raking light */}
+        <div className="lg:hidden">
+          <MaterialMarquee items={MATERIALS.map((m) => ({ pic: pic(m.key, m.name), name: m.name }))} />
+        </div>
+        <div className="shell hidden lg:block">
+          <MaterialsBoard names={MATERIALS.map((m) => m.name)} hint={t("Move over the board: the light follows you")} />
+        </div>
       </section>
 
       {!sr && (

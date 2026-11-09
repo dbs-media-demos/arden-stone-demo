@@ -345,6 +345,142 @@
     -webkit-mask-image: radial-gradient(circle var(--lr, 0px) at var(--lx, 50%) var(--ly, 50%), transparent 97%, #000 100%);
     mask-image: radial-gradient(circle var(--lr, 0px) at var(--lx, 50%) var(--ly, 50%), transparent 97%, #000 100%);
   }
+  /* Desktop hero: the 3D model of the kitchen (HeroRoom). Its still, the pencil drawing, is revealed by the
+     same bronze drafting line; the live canvas takes over from it. */
+  .room-still {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .room-develop {
+    animation: develop 2.6s var(--ease-drawn) 0.3s both;
+  }
+  .room-fallback {
+    animation: room-fade 0.8s ease both;
+  }
+  @keyframes room-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  /* The hero's heading, text and buttons are on the first frame, at every width: the drawing moves instead */
+  .hero-lines .ln > span {
+    animation: none;
+  }
+  .room-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--color-bronze);
+    box-shadow: 0 0 0 1px rgb(196 151 100 / 0.25);
+    pointer-events: none;
+    animation: draft-line 2.6s var(--ease-drawn) 0.3s both;
+  }
+  @media (min-width: 1024px) {
+    /* The photo starts as an "as built" plate in the model's corner; the scroll grows it to the frame (HeroSketch) */
+    .hero-built {
+      transform-origin: 100% 100%;
+      transform: translate(calc(-1 * (var(--gutter) + 1.25rem)), -6.75rem) scale(0.2);
+    }
+    .hero-built .hero-develop {
+      animation: none;
+    }
+    .hero-plate,
+    .hero-plate-shadow {
+      position: absolute;
+      right: calc(var(--gutter) + 1.25rem);
+      bottom: 6.75rem;
+      width: 20%;
+      height: 20%;
+      pointer-events: none;
+    }
+    .hero-plate-shadow {
+      z-index: 1;
+      box-shadow:
+        0 1px 2px rgb(29 25 22 / 0.12),
+        0 6px 14px -4px rgb(29 25 22 / 0.18),
+        0 22px 44px -18px rgb(29 25 22 / 0.35);
+    }
+    .hero-plate {
+      z-index: 3;
+      outline: 4px solid var(--ivory);
+    }
+    .hero-plate .label {
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: -4px;
+      padding: 0.3rem 0.6rem 0.25rem;
+      background: var(--ivory);
+      color: var(--ink);
+      white-space: nowrap;
+    }
+    .hero-hint {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+  /* Materials (desktop): each sample's name, laid on the linen under it (MaterialsBoard) */
+  .sample-board {
+    box-shadow:
+      inset 0 0 0 1px rgb(29 25 22 / 0.06),
+      0 30px 60px -40px rgb(29 25 22 / 0.35);
+  }
+  .sample-label {
+    transform: translate(-50%, 0);
+    white-space: nowrap;
+  }
+  .sample-label > span {
+    display: inline-block;
+    padding: 0.35rem 0.7rem 0.3rem;
+    border-radius: 2px;
+    background: color-mix(in oklab, var(--ivory) 86%, transparent);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+    transition:
+      background-color 0.3s var(--ease-out-expo),
+      color 0.3s var(--ease-out-expo),
+      transform 0.4s var(--ease-out-expo);
+  }
+  .sample-label[data-active] > span {
+    background: var(--ink);
+    color: var(--ivory);
+    transform: translateY(-3px);
+  }
+  .sample-label[data-active] .text-bronze-text {
+    color: var(--bronze-light);
+  }
+  /* Phones: a still of the same model on the hero photo, as a small plate */
+  .room-plate {
+    position: relative;
+    display: block;
+    height: 100%;
+    aspect-ratio: 1;
+    background: color-mix(in oklab, var(--paper) 94%, transparent);
+    border-radius: 2px;
+    box-shadow:
+      0 1px 2px rgb(29 25 22 / 0.14),
+      0 10px 24px -10px rgb(29 25 22 / 0.4);
+    overflow: hidden;
+  }
+  .room-plate img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .room-plate figcaption {
+    position: absolute;
+    top: 0.375rem;
+    left: 0.5rem;
+    font-size: 0.625rem;
+    color: var(--ink);
+  }
   @keyframes bar-fill {
     from {
       transform: scaleX(0);

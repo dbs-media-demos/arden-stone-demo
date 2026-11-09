@@ -37,6 +37,8 @@ export const sr: Record<string, string> = {
   "Show Sitting room": "Prikaži salon",
   "Show Living room": "Prikaži dnevnu sobu",
   "Move over the photo to see the drawing": "Pređite preko fotografije da vidite crtež",
+  "As built": "Izvedeno",
+  "3D design": "3D projekat",
 
   // Statement
   "The studio": "Studio",
@@ -180,6 +182,7 @@ export const sr: Record<string, string> = {
   "Stone terrazzo": "Kameni teraco",
   "Fluted oak": "Kanelirani hrast",
   Travertine: "Travertin",
+  "Move over the board: the light follows you": "Pređite preko table: svetlo vas prati",
 
   // Reviews (the six shown on previews)
   Reviews: "Recenzije",
