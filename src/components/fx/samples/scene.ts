@@ -38,9 +38,10 @@ import {
 } from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import type { LiveOptions } from "../room3d/scene";
 
 export const SAMPLES_ASPECT = 2.4;
-export type SamplesOptions = { still?: boolean; base?: string };
+export type SamplesOptions = { still?: boolean; base?: string } & LiveOptions;
 export type SamplesScene = {
   onReady: (cb: () => void) => void;
   /** Pointer over the board (-1..1 both ways), or null when it leaves. */
@@ -68,11 +69,12 @@ function rng(seed: number) {
   };
 }
 
-function canvas2d(w: number, h = w) {
+/** `read`: a height map that normalFrom reads back, kept in memory (no wait on the GPU to read it). */
+function canvas2d(w: number, h = w, read = false) {
   const c = document.createElement("canvas");
   c.width = w;
   c.height = h;
-  return [c, c.getContext("2d")!] as const;
+  return [c, c.getContext("2d", { willReadFrequently: read })!] as const;
 }
 
 /** A normal map from a grey height canvas (white = high), so the raking light finds the relief. */
@@ -113,7 +115,7 @@ function linen() {
   const R = rng(3);
   const S = 256;
   const [c, g] = canvas2d(S);
-  const [hc, hg] = canvas2d(S);
+  const [hc, hg] = canvas2d(S, S, true);
   g.fillStyle = "#e4ddd1";
   g.fillRect(0, 0, S, S);
   hg.fillStyle = "#808080";
@@ -144,7 +146,7 @@ function stone(seed: number, base: string, speck: string, opts: { bands?: boolea
   const R = rng(seed);
   const S = 256;
   const [c, g] = canvas2d(S);
-  const [hc, hg] = canvas2d(S);
+  const [hc, hg] = canvas2d(S, S, true);
   g.fillStyle = base;
   g.fillRect(0, 0, S, S);
   hg.fillStyle = "#909090";
@@ -214,7 +216,7 @@ function walnut() {
 /** Knurling: a fine diamond crosshatch, as height. */
 function knurl() {
   const S = 128;
-  const [c, g] = canvas2d(S);
+  const [c, g] = canvas2d(S, S, true);
   const img = g.createImageData(S, S);
   for (let y = 0; y < S; y++)
     for (let x = 0; x < S; x++) {
@@ -267,8 +269,9 @@ const LIGHT0 = { az: -58, el: 19 };
 export async function createSamples(canvas: HTMLCanvasElement, opts: SamplesOptions = {}): Promise<SamplesScene> {
   const still = !!opts.still;
   const base = opts.base ?? "";
-  const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: still, powerPreference: "high-performance" });
-  renderer.setPixelRatio(still ? 1 : Math.min(window.devicePixelRatio || 1, 1.75));
+  const pause = opts.pause ?? (async () => {});
+  const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: still, powerPreference: "high-performance", ...opts.gl });
+  renderer.setPixelRatio(still ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.setSize(canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, false);
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -283,6 +286,7 @@ export async function createSamples(canvas: HTMLCanvasElement, opts: SamplesOpti
   scene.environment = envRT.texture;
   scene.environmentIntensity = 0.2;
   pmrem.dispose();
+  await pause();
   scene.add(new HemisphereLight(0xfff6ea, 0x9c8a74, 0.18));
 
   const camera = new PerspectiveCamera(22, SAMPLES_ASPECT, 1, 60);
@@ -301,14 +305,20 @@ export async function createSamples(canvas: HTMLCanvasElement, opts: SamplesOpti
       return t;
     });
   const [marblePhoto, oakMap, terrazzoMap] = await Promise.all([photo("marble"), photo("oak"), photo("terrazzo")]);
+  await pause();
   const marbleMap = calacatta(marblePhoto);
   disposables.push(marbleMap);
+  await pause();
 
   const lin = linen();
+  await pause();
   const lime = stone(5, "#ddd2bf", "rgba(110,96,74,A)", { mottle: 30, pits: 18 });
+  await pause();
   const trav = stone(9, "#e2d6c2", "rgba(120,104,84,A)", { bands: true, pits: 110 });
+  await pause();
   const walnutMap = walnut();
   const knurlN = knurl();
+  await pause();
   knurlN.repeat.set(3, 1);
   disposables.push(lin.map, lin.normal, lime.map, lime.normal, trav.map, trav.normal, walnutMap, knurlN);
 
@@ -382,6 +392,7 @@ export async function createSamples(canvas: HTMLCanvasElement, opts: SamplesOpti
   });
   sample(3.85, 1.3, 0.06, 1.2, (g) => g.add(slab(1.9, 0.26, 1.2, M.travertine, 0.04))); // Travertine
 
+  await pause();
   // ── The raking light ──
   const key = new SpotLight(0xffdcb2, 520, 36, 0.85, 1, 2);
   key.castShadow = true;
@@ -404,6 +415,9 @@ export async function createSamples(canvas: HTMLCanvasElement, opts: SamplesOpti
   let hoverCb: ((i: number | null) => void) | null = null;
   let visible = true;
   let raf = 0;
+  /** This frame follows the last one straight away (the loop kept going), so its length counts. */
+  let chained = false;
+  let lastFrame = 0;
   let disposed = false;
   let ready = false;
   let readyCb: (() => void) | null = null;
@@ -429,9 +443,11 @@ export async function createSamples(canvas: HTMLCanvasElement, opts: SamplesOpti
     });
     renderer.render(scene, camera);
   };
-  const tick = () => {
+  const tick = (now: number) => {
     raf = 0;
     if (disposed) return;
+    if (chained) opts.onFrame?.(now - lastFrame);
+    lastFrame = now;
     if (ptr) {
       goal.az = ptr.x * 70;
       goal.el = MathUtils.lerp(34, 12, (ptr.y + 1) / 2);
@@ -451,10 +467,12 @@ export async function createSamples(canvas: HTMLCanvasElement, opts: SamplesOpti
       if (Math.abs(s.target - s.lift) > 0.002) moving = true;
     });
     render();
-    if (moving) kick();
+    if (moving) kick(true);
   };
-  const kick = () => {
-    if (!raf && visible && !disposed && !still) raf = requestAnimationFrame(tick);
+  const kick = (chain = false) => {
+    if (raf || !visible || disposed || still) return;
+    raf = requestAnimationFrame(tick);
+    chained = chain;
   };
   const pick = (p: { x: number; y: number }) => {
     ray.setFromCamera(new Vector2(p.x, -p.y), camera);
@@ -474,8 +492,16 @@ export async function createSamples(canvas: HTMLCanvasElement, opts: SamplesOpti
   };
 
   resize();
+  await pause();
+  // the textures go up one at a time, then the shaders compile off the main thread
+  for (const t of [marbleMap, oakMap, terrazzoMap, lin.map, lin.normal, lime.map, lime.normal, trav.map, trav.normal, walnutMap, knurlN]) {
+    renderer.initTexture(t);
+    await pause();
+  }
   await renderer.compileAsync(scene, camera);
-  render();
+  await pause();
+  // the first frame (and its shadow pass) is drawn while the canvas is still invisible
+  render(); 
   if (!still)
     requestAnimationFrame(() => {
       render();
@@ -529,6 +555,7 @@ export async function createSamples(canvas: HTMLCanvasElement, opts: SamplesOpti
       });
     },
     dispose() {
+      if (disposed) return;
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
       scene.traverse((o) => {

@@ -2,25 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
+import { afterLoad, breathe, canRun3D, demote, GL_ATTRS, machineOk, onDemote, warmShaders, warmUp, watchFrames } from "../gate3d";
 import anchors from "./anchors.json";
 import type { SamplesScene } from "./scene";
 
-const DESK_3D = "(min-width: 1024px) and (hover: hover) and (pointer: fine)";
 /** The board is desktop only (phones and tablets keep the swatch row): nothing below 1024 px fetches it. */
 const NOT_DESK = "(max-width: 1023.98px)";
 const BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 const SIZES = "(min-width: 1680px) 1580px, 94vw";
 const set = (ext: string) => `/images/samples/board-1400.${ext} 1400w, /images/samples/board-2400.${ext} 2400w`;
 
-type Conn = { saveData?: boolean };
-
 /**
  * The materials as a sample board (desktop). The server HTML carries a still of the 3D board
  * (scripts/render-room.mjs) with every sample's name laid under it, so it reads on the first frame.
- * On a desktop with a mouse, as the section comes near, the scene is fetched with `await import()`
- * (three.js is already cached from the hero) and takes over from the still: a low, warm light rakes
- * across the samples as the page scrolls and follows the pointer over the board, and a sample lifts
- * when it or its name is hovered.
+ * On a desktop with a mouse, while the browser is idle after load (straight after the hero, long
+ * before the visitor gets here), the scene is fetched with `await import()` (three.js is already
+ * cached from the hero), built, compiled and drawn once out of sight (fx/gate3d.ts). When the board is
+ * on screen it takes over from the still: a low, warm light rakes across the samples as the page
+ * scrolls and follows the pointer over the board, and a sample lifts when it or its name is hovered.
+ * Too slow here (its first 2 seconds of frames, or the hero's): it fades back to the still.
  */
 export function MaterialsBoard({ names, hint }: { names: string[]; hint: string }) {
   const stage = useRef<HTMLDivElement>(null);
@@ -32,29 +32,40 @@ export function MaterialsBoard({ names, hint }: { names: string[]; hint: string 
   useEffect(() => {
     const el = canvas.current;
     const box = stage.current;
-    if (!el || !box || !window.matchMedia(DESK_3D).matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || (navigator as Navigator & { connection?: Conn }).connection?.saveData) return;
+    if (!el || !box || !canRun3D()) return;
 
     let cancelled = false;
-    let started = false;
     let sc: SamplesScene | undefined;
     const off: (() => void)[] = [];
+    const timers: number[] = [];
+    const stop = () => {
+      cancelled = true;
+      off.splice(0).forEach((f) => f());
+    };
 
     const start = async () => {
-      if (started) return;
-      started = true;
+      await afterLoad();
+      if (cancelled || !canRun3D() || !(await machineOk()) || cancelled) return;
       try {
-        const { createSamples } = await import("./scene");
-        if (cancelled) return;
-        sc = await createSamples(el);
-        if (cancelled) return sc.dispose();
+        sc = await warmUp(async () => {
+          const [{ createSamples }] = await Promise.all([import("./scene"), warmShaders()]);
+          if (cancelled) return;
+          const s = await createSamples(el, { gl: GL_ATTRS, pause: breathe, onFrame: watchFrames("board", () => demote("board")) });
+          s.setVisible(false); // drawn once out of sight; frames only once it's on screen
+          await new Promise<void>((r) => s.onReady(r));
+          return s;
+        });
       } catch {
-        return; // no WebGL: the still stays
+        if (!cancelled) demote("webgl"); // no WebGL, or not a proper GPU: the still stays
+        return;
       }
+      if (!sc) return;
+      if (cancelled) return sc.dispose();
       const s = sc;
       scene.current = s;
       s.onHover(setActive);
-      s.onReady(() => !cancelled && setOn(true));
+      performance.mark("3d:board:on");
+      setOn(true);
 
       let onScreen = false;
       const progress = () => {
@@ -90,27 +101,23 @@ export function MaterialsBoard({ names, hint }: { names: string[]; hint: string 
       onScroll();
     };
 
-    // Set up once the page has loaded and the board is about a screen away
-    const near = new IntersectionObserver(
-      ([e]) => {
-        if (!e.isIntersecting) return;
-        near.disconnect();
-        const ric = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 120));
-        const go = () => ric(() => void start(), { timeout: 1500 });
-        if (document.readyState === "complete") go();
-        else {
-          window.addEventListener("load", go, { once: true });
-          off.push(() => window.removeEventListener("load", go));
-        }
-      },
-      { rootMargin: "100% 0px" },
+    // Too slow here (this scene or the hero): fade back to the still, stop, and free the GPU
+    off.push(
+      onDemote(() => {
+        stop();
+        setOn(false);
+        setActive(null);
+        scene.current = null;
+        const s = sc;
+        s?.setVisible(false);
+        timers.push(window.setTimeout(() => s?.dispose(), 900));
+      }),
     );
-    near.observe(box);
+    void start();
 
     return () => {
-      cancelled = true;
-      near.disconnect();
-      off.forEach((f) => f());
+      stop();
+      timers.forEach(clearTimeout);
       scene.current = null;
       sc?.dispose();
     };

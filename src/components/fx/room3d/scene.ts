@@ -31,6 +31,7 @@ import {
   Mesh,
   Object3D,
   MeshBasicMaterial,
+  MeshDepthMaterial,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   PCFShadowMap,
@@ -48,6 +49,11 @@ import {
   Vector2,
   Vector3,
   WebGLRenderer,
+  WebGLRenderTarget,
+  BackSide,
+  DoubleSide,
+  FrontSide,
+  type Camera,
   type Material,
   type WebGLProgramParametersWithUniforms,
 } from "three";
@@ -62,6 +68,15 @@ export type RoomOptions = {
   view?: Partial<RoomView>;
   /** The aspect the stills are rendered at; the live canvas crops like object-fit: cover around it. */
   aspect?: number;
+} & LiveOptions;
+/** The live scene's manners (fx/gate3d.ts); the stills script leaves them out. */
+export type LiveOptions = {
+  /** Extra context attributes (the fast GPU, no software rendering). */
+  gl?: WebGLContextAttributes;
+  /** Awaited between the steps of the setup, so the page never waits on it for long. */
+  pause?: () => Promise<void>;
+  /** Called with the length of every frame drawn straight after another one (ms). */
+  onFrame?: (dt: number) => void;
 };
 export type RoomScene = {
   onReady: (cb: () => void) => void;
@@ -329,14 +344,51 @@ function lineMaterial() {
   });
 }
 
+/**
+ * compileAsync leaves out the shadow pass, so its depth shaders would compile in the middle of the
+ * first frame. A stand-in for each kind of shadow caster (side, instanced or not), compiled the same
+ * way into a render target (as the shadow map is), puts them in the program cache first.
+ */
+export async function compileShadows(renderer: WebGLRenderer, scene: Scene, camera: Camera) {
+  const flip = { [FrontSide]: BackSide, [BackSide]: FrontSide, [DoubleSide]: DoubleSide };
+  const twins = new Scene();
+  const seen = new Set<string>();
+  const made: { dispose: () => void }[] = [];
+  scene.traverse((o) => {
+    const m = o as Mesh;
+    if (!m.isMesh || !m.castShadow) return;
+    for (const mat of ([] as Material[]).concat(m.material)) {
+      const side = mat.shadowSide ?? flip[mat.side];
+      const inst = !!(m as InstancedMesh).isInstancedMesh;
+      if (seen.has(`${side}${inst}`)) continue;
+      seen.add(`${side}${inst}`);
+      const d = new MeshDepthMaterial({ side });
+      made.push(d);
+      twins.add(inst ? new InstancedMesh(m.geometry, d, 1) : new Mesh(m.geometry, d));
+    }
+  });
+  const rt = new WebGLRenderTarget(1, 1);
+  const prev = renderer.getRenderTarget();
+  renderer.setRenderTarget(rt);
+  const done = renderer.compileAsync(twins, camera, scene);
+  renderer.setRenderTarget(prev);
+  await done;
+  rt.dispose();
+  made.forEach((d) => d.dispose());
+}
+
 type PartOpts = { lines?: BufferGeometry | null; cast?: boolean; receive?: boolean };
 
 export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = {}): Promise<RoomScene> {
   const still = opts.still;
   const aspect0 = opts.aspect ?? STILL_ASPECT;
-  const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: !!still, powerPreference: "high-performance" });
+  const pause = opts.pause ?? (async () => {});
+  const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: !!still, powerPreference: "high-performance", ...opts.gl });
   renderer.setClearColor(0x000000, 0);
-  renderer.setPixelRatio(still ? 1 : Math.min(window.devicePixelRatio || 1, 1.75));
+  renderer.setPixelRatio(still ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+  // sized first: resizing the drawing buffer later waits on all the GPU work queued before it
+  renderer.setSize(canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, false);
+  await pause();
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.08;
   renderer.outputColorSpace = SRGBColorSpace;
@@ -349,6 +401,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
   scene.environment = envRT.texture;
   scene.environmentIntensity = 0.42;
   pmrem.dispose();
+  await pause();
 
   const camera = new PerspectiveCamera(FOV, aspect0, 0.5, 60);
   const disposables: { dispose: () => void }[] = [envRT];
@@ -362,6 +415,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
   const veneer = oakVeneer();
   const marbleTex = marble();
   disposables.push(floorTex, veneer, marbleTex);
+  await pause();
   const std = (p: ConstructorParameters<typeof MeshStandardMaterial>[0], mode: "surface" | "discard" = "surface") => {
     const m = developable(new MeshStandardMaterial(p), mode);
     disposables.push(m);
@@ -437,6 +491,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
     p.renderOrder = 1;
     add(p, { cast: false, receive: false, lines: null });
   };
+  await pause();
   // ── The room: oak floor on a slab cut in section, two plaster walls, a tall window ──
   const FX0 = -3.0, FX1 = 3.0, FZ0 = -2.2, FZ1 = 2.2, H = 2.8, T = 0.16;
   box(FX0 - T, -0.16, FZ0 - T, FX1, 0, FZ1, [M.cut, M.cut, M.floor, M.cut, M.cut, M.cut], { r: 0 });
@@ -462,6 +517,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
   pane.position.set((fx0 + fx1) / 2, (WY0 + WY1) / 2, (WZ0 + WZ1) / 2);
   add(pane, { cast: false, receive: false, lines: null });
 
+  await pause();
   // ── Back run: oak base cabinets, stone top with a waterfall end, the marble slab, greige uppers ──
   const BX0 = -0.35, BX1 = 2.72, BZ0 = FZ0, BZ1 = FZ0 + 0.62;
   box(BX0, 0, BZ0, BX1 - 0.07, 0.08, BZ1 - 0.06, M.cut, { r: 0, lines: null }); // toe kick
@@ -483,6 +539,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
   crock.position.set(2.35, 1.005, FZ0 + 0.25);
   add(crock, { lines: new EdgesGeometry(new CylinderGeometry(0.06, 0.055, 0.17, 12), 40) });
 
+  await pause();
   // ── Tall bank: white lacquer, two ovens in dark glass ──
   const TX = [-2.86, -2.06, -1.26, -0.46];
   const TZ0 = FZ0, TZ1 = FZ0 + 0.62;
@@ -500,6 +557,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
   }
   box(TX[0], 0, TZ0, TX[3], 0.06, TZ1 - 0.05, M.cut, { r: 0, lines: null });
 
+  await pause();
   // ── The island: white stone waterfall ends that taper, an oak core, a seating overhang ──
   const IX0 = -0.95, IX1 = 1.95, IZ0 = -0.15, IZ1 = 0.95, IH = 0.94;
   box(IX0, IH - 0.06, IZ0, IX1, IH, IZ1, M.stone, { r: 0.008 });
@@ -549,6 +607,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
     add(l, { lines: null });
   });
 
+  await pause();
   // ── Three walnut stools with cream seats, backs to the camera ──
   const stoolXs = [-0.35, 0.45, 1.25];
   for (const sx of stoolXs) {
@@ -567,6 +626,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
     box(x0 + 0.02, 0.76, z1 - 0.06, x1 - 0.02, 0.9, z1 - 0.01, M.fabric, { r: 0.02 });
   }
 
+  await pause();
   // ── An olive tree in a stone pot, by the window: its leaves dapple the sunlight on the floor ──
   {
     const R = rng(41);
@@ -647,6 +707,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
     ao(ox - 0.26, oz - 0.26, ox + 0.26, oz + 0.26, 0.5);
   }
 
+  await pause();
   // ── Two ring pendants over the island, hung from the (cut away) ceiling ──
   const glows: PointLight[] = [];
   for (const px of [-0.05, 1.05]) {
@@ -689,6 +750,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
     glows.push(pl);
   }
 
+  await pause();
   // ── The sheet under the model: a soft contact shadow and drafted dimension lines ──
   const ground = new Mesh(new PlaneGeometry(8.6, 6.9), developable(new MeshBasicMaterial({ color: 0x1d1916, alphaMap: shadowTex, transparent: true, opacity: 0.38, depthWrite: false }), "fade"));
   ground.rotation.x = -Math.PI / 2;
@@ -725,6 +787,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
   ao(FX0, FZ0, FX1, FZ0 + 0.25, 0.25); // along the back wall
   ao(FX0, FZ0, FX0 + 0.25, FZ1, 0.25); // along the left wall
 
+  await pause();
   // ── Light: late sun through the window, soft fill from the room, warm pendants ──
   const sun = new DirectionalLight(0xffdcae, 7.5);
   sun.position.set(-8.5, 6.2, -3.4);
@@ -752,6 +815,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
   scene.add(ceiling);
   disposables.push(ceiling.geometry);
 
+  await pause();
   // ── Pencil lines (merged), each stroke run a little past the corner, the way drafters draw ──
   let lineMesh: LineSegments;
   {
@@ -808,6 +872,9 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
   let drift = still === "built" ? 1 : 0;
   let visible = true;
   let raf = 0;
+  /** This frame follows the last one straight away (the loop kept going), so its length counts. */
+  let chained = false;
+  let lastFrame = 0;
   let introStart = -1;
   let disposed = false;
   let readyCb: (() => void) | null = null;
@@ -859,6 +926,8 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
   const tick = (now: number) => {
     raf = 0;
     if (disposed) return;
+    if (chained) opts.onFrame?.(now - lastFrame);
+    lastFrame = now;
     let moving = false;
     if (introStart >= 0) {
       const t = now - introStart;
@@ -874,19 +943,26 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
     scrollCur += (scrollP - scrollCur) * 0.12;
     if (Math.abs(ptr.tx - ptr.x) > 0.0005 || Math.abs(ptr.ty - ptr.y) > 0.0005 || Math.abs(scrollP - scrollCur) > 0.0005) moving = true;
     render();
-    if (moving) kick();
+    if (moving) kick(true);
   };
-  const kick = () => {
-    if (!raf && visible && !disposed && !still) raf = requestAnimationFrame(tick);
+  const kick = (chain = false) => {
+    if (raf || !visible || disposed || still) return;
+    raf = requestAnimationFrame(tick);
+    chained = chain;
   };
 
-  renderer.setSize(canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height, false);
   place();
-  if (still) {
-    await renderer.compileAsync(scene, camera);
-    render();
-  } else {
-    await renderer.compileAsync(scene, camera);
+  await pause();
+  // the textures go up one at a time, then the shaders compile off the main thread
+  for (const t of [floorTex, veneer, marbleTex, shadowTex]) {
+    renderer.initTexture(t);
+    await pause();
+  }
+  await Promise.all([renderer.compileAsync(scene, camera), compileShadows(renderer, scene, camera)]);
+  await pause();
+  if (still) render();
+  else {
+    // the first frame (and its shadow pass) is drawn while the canvas is still invisible
     render();
     // two frames so the first composited one is the finished picture
     requestAnimationFrame(() => {
@@ -941,6 +1017,7 @@ export async function createRoom(canvas: HTMLCanvasElement, opts: RoomOptions = 
       render();
     },
     dispose() {
+      if (disposed) return;
       disposed = true;
       if (raf) cancelAnimationFrame(raf);
       scene.traverse((o) => {

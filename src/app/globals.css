@@ -369,15 +369,36 @@
   .hero-lines .ln > span {
     animation: none;
   }
+  /* The line spans the whole box and moves by transform, so it runs on the compositor and stays smooth
+     while the 3D warms up on the main thread (the clip-path reveal above is composited too). */
   .room-line {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    animation: room-line 2.6s var(--ease-drawn) 0.3s both;
+  }
+  .room-line::before {
+    content: "";
     position: absolute;
     top: 0;
     bottom: 0;
+    left: 0;
     width: 1px;
     background: var(--color-bronze);
     box-shadow: 0 0 0 1px rgb(196 151 100 / 0.25);
-    pointer-events: none;
-    animation: draft-line 2.6s var(--ease-drawn) 0.3s both;
+  }
+  @keyframes room-line {
+    0% {
+      transform: translateX(64%);
+      opacity: 1;
+    }
+    88% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 0;
+    }
   }
   @media (min-width: 1024px) {
     /* The photo starts as an "as built" plate in the model's corner; the scroll grows it to the frame (HeroSketch) */
