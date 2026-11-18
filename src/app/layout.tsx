@@ -56,7 +56,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-US" className={`${cormorant.variable} ${manrope.variable} ${plexMono.variable}`}>
+    <html lang="en-US" className={`${cormorant.variable} ${manrope.variable} ${plexMono.variable}`} suppressHydrationWarning>
       <head>
         <link rel="preload" href="/fonts/cormorant-phone.woff2" as="font" type="font/woff2" crossOrigin="anonymous" media={PHONE_MEDIA} />
         <link rel="preload" href="/fonts/cormorant-phone-italic.woff2" as="font" type="font/woff2" crossOrigin="anonymous" media={PHONE_MEDIA} />

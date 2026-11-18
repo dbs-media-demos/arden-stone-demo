@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { RatingPill, Stars } from "@/components/ui/Bits";
 import { REVIEWS, type Review } from "@/data/studio";
 import { defaultBiz } from "@/lib/biz";
-import { L, num, type Biz } from "@/lib/biz-core";
+import { L, areasOf, num, type Biz } from "@/lib/biz-core";
 
 function Card({ r, className, area }: { r: Review; className?: string; area?: string }) {
   return (
@@ -35,10 +35,12 @@ const PHONE_STACKED = 3;
 
 export function ReviewsRow({ count = 8, biz = defaultBiz }: { count?: number; biz?: Biz }) {
   const list = biz.preview ? REVIEWS.filter((r) => PREVIEW_REVIEWS.includes(r.name)) : REVIEWS.slice(0, count);
-  const area = biz.preview ? biz.area : undefined;
+  // previews: the reviewers live in the towns they serve, in turn
+  const towns = areasOf(biz);
+  const areaOf = (r: Review) => (biz.preview ? (towns[list.indexOf(r) % Math.max(1, towns.length)] ?? "") : undefined);
   const item = (r: Review, stacked?: boolean) => (
     <li key={r.name} className={clsx("w-[84vw] shrink-0 snap-start sm:w-[46vw] lg:w-[28vw]", stacked && "cv [--cv:237px]")}>
-      <Card r={r} area={area} />
+      <Card r={r} area={areaOf(r)} />
     </li>
   );
   return (

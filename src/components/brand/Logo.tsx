@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { useBiz } from "@/components/preview/BizContext";
+import { inlineLogo } from "@/lib/logo";
 
 /** The mark: an arched doorway (Arden) standing on a dressed stone block (Stone). */
 export function Mark({ className, title }: { className?: string; title?: string }) {
@@ -18,6 +19,18 @@ export function Mark({ className, title }: { className?: string; title?: string 
 
 export function Logo({ className, compact }: { className?: string; compact?: boolean }) {
   const biz = useBiz();
+  // Their own logo, in the header's ink (currentColor: ink on ivory, ivory over the open menu)
+  if (biz.logo) {
+    return (
+      <span
+        role="img"
+        aria-label={biz.name}
+        data-no-translate
+        className={clsx("biz-logo h-10 max-w-[min(16rem,56vw)] phone:h-8 sm:max-w-[20rem]", className)}
+        dangerouslySetInnerHTML={{ __html: inlineLogo(biz.logo.svg) }}
+      />
+    );
+  }
   return (
     <span className={clsx("inline-flex items-center gap-2.5", className)}>
       <Mark className="h-8 w-8 shrink-0" />

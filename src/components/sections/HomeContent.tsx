@@ -27,7 +27,7 @@ import { PreviewMap } from "@/components/preview/PreviewMap";
 import { PhoneTeam, QuoteSection } from "@/components/sections/PhoneSections";
 import { sr as srDict } from "@/i18n/sr";
 import { defaultBiz } from "@/lib/biz";
-import { L, openDays, telOf, type Biz } from "@/lib/biz-core";
+import { L, areaList, areasOf, openDays, telOf, type Biz } from "@/lib/biz-core";
 
 /** The finished kitchen the hero's 3D model is drawn from (and the photo phones lead with). */
 const SLIDE: HeroSlide = {
@@ -81,7 +81,7 @@ export function HomeContent({ biz = defaultBiz, hero = "3d", children }: { biz?:
   const lede = biz.preview
     ? L(
         biz,
-        `Architects, designers and makers under one roof. We renovate homes across ${biz.area}, from the first pencil line to the final coat of wax.`,
+        `Architects, designers and makers under one roof. We renovate homes across ${areaList(biz)}, from the first pencil line to the final coat of wax.`,
         "Projektanti, dizajneri i majstori pod jednim krovom. Renoviramo domove od prve linije olovkom do poslednjeg sloja voska.",
       )
     : "Architects, designers and makers under one roof. We renovate homes across Highland Park, Preston Hollow and DFW, from the first pencil line to the final coat of wax.";
@@ -275,10 +275,11 @@ export function HomeContent({ biz = defaultBiz, hero = "3d", children }: { biz?:
         trFirst={sr}
         types={CATEGORIES.map((c) => ({ id: c.id, label: t(c.label) }))}
         allLabel={L(biz, "All", "Sve")}
-        items={projects.map((p) => ({
+        items={projects.map((p, i) => ({
           slug: p.slug,
           title: t(p.title),
-          area: biz.preview ? biz.area : p.area,
+          // previews spread the projects over the towns they serve
+          area: biz.preview ? (areasOf(biz)[i % Math.max(1, areasOf(biz).length)] ?? "") : p.area,
           year: p.year,
           tag: t(catLabel(p.categories[0])),
           types: p.categories,

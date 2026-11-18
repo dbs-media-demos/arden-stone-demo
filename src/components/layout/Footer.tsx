@@ -9,7 +9,8 @@ import { SERVICES } from "@/data/services";
 import { pic, type ImageKey } from "@/lib/images";
 import { site } from "@/lib/site";
 import { defaultBiz } from "@/lib/biz";
-import { L, telOf, type Biz } from "@/lib/biz-core";
+import { L, areasOf, telOf, type Biz } from "@/lib/biz-core";
+import { inlineLogo } from "@/lib/logo";
 
 const TRAIL: ImageKey[] = [
   "kitchen/warm-white",
@@ -55,6 +56,9 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
         <div className="hairline" />
         <div className="grid gap-12 py-16 phone:grid-cols-2 phone:gap-x-4 phone:gap-y-4 phone:py-5 sm:grid-cols-2 lg:grid-cols-12">
           <div className="phone:col-span-2 lg:col-span-4">
+            {biz.logo && (
+              <span role="img" aria-label={biz.name} data-no-translate className="biz-logo mb-8 h-12 max-w-[20rem] text-ivory phone:mb-3 phone:h-10" dangerouslySetInnerHTML={{ __html: inlineLogo(biz.logo.svg) }} />
+            )}
             <address className="not-italic">
               {biz.preview ? (
                 <p className="font-display text-3xl leading-tight phone:text-2xl">{biz.address.full}</p>
@@ -102,7 +106,7 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
           <FooterCol
             title="Areas"
             className="footer-areas phone:col-span-2 lg:col-span-3"
-            links={biz.preview ? [{ href: "/areas", label: biz.area }] : [{ href: "/areas", label: "All service areas" }, ...AREAS.map((a) => ({ href: `/areas/${a.slug}`, label: a.name }))]}
+            links={biz.preview ? areasOf(biz).map((a) => ({ href: `/areas#${encodeURIComponent(a)}`, label: a })) : [{ href: "/areas", label: "All service areas" }, ...AREAS.map((a) => ({ href: `/areas/${a.slug}`, label: a.name }))]}
           />
         </div>
 
@@ -124,12 +128,19 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
         </div>
 
         <div aria-hidden className="pointer-events-none flex items-end justify-between gap-6 pt-4 text-ivory/[0.07] select-none phone:pt-0">
-          <svg viewBox="0 0 1000 150" className="h-auto w-full min-w-0 flex-1 overflow-visible" aria-hidden focusable="false">
-            <text x="0" y="128" fill="currentColor" fontFamily="var(--font-cormorant)" fontSize="172" letterSpacing="-6" textLength="1000" lengthAdjust="spacingAndGlyphs">
-              {biz.preview ? biz.shortName : "Arden & Stone"}
-            </text>
-          </svg>
-          <Mark className="mb-[2vw] hidden h-[9vw] w-[9vw] shrink-0 md:block [--mark-accent:currentColor] [--ivory:var(--ink)]" />
+          {biz.logo ? (
+            // their logo, as the ghosted sign-off
+            <span className="biz-logo biz-logo--ghost w-full justify-center pb-[2vw]" data-no-translate dangerouslySetInnerHTML={{ __html: inlineLogo(biz.logo.svg) }} />
+          ) : (
+            <>
+              <svg viewBox="0 0 1000 150" className="h-auto w-full min-w-0 flex-1 overflow-visible" aria-hidden focusable="false">
+                <text x="0" y="128" fill="currentColor" fontFamily="var(--font-cormorant)" fontSize="172" letterSpacing="-6" textLength="1000" lengthAdjust="spacingAndGlyphs">
+                  {biz.preview ? biz.shortName : "Arden & Stone"}
+                </text>
+              </svg>
+              <Mark className="mb-[2vw] hidden h-[9vw] w-[9vw] shrink-0 md:block [--mark-accent:currentColor] [--ivory:var(--ink)]" />
+            </>
+          )}
         </div>
       </div>
     </footer>

@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { SplitReveal } from "@/components/ui/Reveal";
 import { Button } from "@/components/ui/Button";
 import { OpenBadge } from "@/components/ui/OpenBadge";
-import { DAY_NAMES, L, dayRange, weekFromMonday, type Biz } from "@/lib/biz-core";
+import { DAY_NAMES, L, areasOf, dayRange, weekFromMonday, type Biz } from "@/lib/biz-core";
 
 /** A preview's "where we work": the business's real address on a Google map, hours and directions. */
 export function PreviewMap({ biz, className }: { biz: Biz; className?: string }) {
@@ -26,6 +26,18 @@ export function PreviewMap({ biz, className }: { biz: Biz; className?: string })
             )}
           </SplitReveal>
           {biz.address.full && <p className="lede mt-6 phone:mt-2">{biz.address.full}</p>}
+          {areasOf(biz).length > 1 && (
+            <div className="mt-8 phone:mt-3">
+              <p className="label text-faint">{L(biz, "Homes we renovate in", "Renoviramo domove u mestima")}</p>
+              <ul className="mt-3 flex flex-wrap gap-2 phone:mt-2 phone:gap-1.5" data-no-translate>
+                {areasOf(biz).map((a) => (
+                  <li key={a} className="label rounded-full border border-line px-3 py-1.5 text-ink phone:px-2.5 phone:py-1">
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="mt-8 phone:mt-3">
             <OpenBadge className="text-muted" />
             {biz.hours && (

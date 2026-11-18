@@ -5,13 +5,15 @@ import clsx from "clsx";
 import { NOT_PHONE_MEDIA, PHONE_MEDIA } from "@/lib/media";
 import { afterLoad, breathe, canRun3D, demote, DESK_3D, GL_ATTRS, machineOk, onDemote, warmedUp, warmShaders, warmUp, watchFrames } from "../gate3d";
 import type { RoomScene } from "./scene";
+import { loaderDoneAt, whenLoaderDone } from "@/lib/loader";
 
 /** Where the live scene may run, the HTML shows the drawing it starts from; everywhere else the built room. */
 const DRAWN_MEDIA = `${DESK_3D} and (prefers-reduced-motion: no-preference)`;
 const BLANK = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 const SIZES = "(min-width: 1024px) 54vw, 1px";
 const set = (name: string, ext: string) => `/images/room/${name}-960.${ext} 960w, /images/room/${name}-1520.${ext} 1520w`;
-/** The CSS drafting line has revealed the drawing by then (0.3 s + 2.6 s); the build starts after it. */
+/** The CSS drafting line has revealed the drawing by then (0.3 s + 2.6 s); the build starts after it.
+ * Both count from the lead's logo loader going, when there is one (the CSS waits for it too). */
 const DRAWN_AT = 3000;
 
 /**
@@ -41,11 +43,16 @@ export function HeroRoom({ className }: { className?: string }) {
     if (!el || !window.matchMedia(DESK_3D).matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return; // the picture is already the built room
     const timers: number[] = [];
-    const toStill = () => timers.push(window.setTimeout(() => setFallback("fade"), Math.max(0, DRAWN_AT - performance.now())));
+    const waits: (() => void)[] = [];
+    const drawnIn = (min: number) => Math.max(min, loaderDoneAt() + DRAWN_AT - performance.now());
+    const toStill = () => waits.push(whenLoaderDone(() => timers.push(window.setTimeout(() => setFallback("fade"), drawnIn(0)))));
     // Save-Data, or this visit already went back to the stills: no 3D download
     if (!canRun3D()) {
       toStill();
-      return () => timers.forEach(clearTimeout);
+      return () => {
+        timers.forEach(clearTimeout);
+        waits.forEach((f) => f());
+      };
     }
 
     let cancelled = false;
@@ -76,10 +83,11 @@ export function HeroRoom({ className }: { className?: string }) {
       if (cancelled) return sc.dispose();
       const scene = sc;
       performance.mark("3d:hero:on");
-      setOn(true);
+      // After the lead's logo loader the drafting line starts late: the canvas waits until it has drawn the still
+      waits.push(whenLoaderDone(() => timers.push(window.setTimeout(() => !cancelled && setOn(true), loaderDoneAt() ? drawnIn(0) : 0))));
       // The build starts once the drawing is done and the scenes further down have warmed up too
       void Promise.race([warmedUp(), new Promise((r) => window.setTimeout(r, 2000))]).then(() => {
-        if (!cancelled) timers.push(window.setTimeout(() => scene.intro(), Math.max(250, DRAWN_AT - performance.now())));
+        if (!cancelled) waits.push(whenLoaderDone(() => timers.push(window.setTimeout(() => scene.intro(), drawnIn(250)))));
       });
 
       let onScreen = true;
@@ -129,6 +137,7 @@ export function HeroRoom({ className }: { className?: string }) {
     return () => {
       stop();
       timers.forEach(clearTimeout);
+      waits.forEach((f) => f());
       sc?.dispose();
     };
   }, []);
