@@ -39,6 +39,16 @@ export const sr: Record<string, string> = {
   "Move over the photo to see the drawing": "Pređite preko fotografije da vidite crtež",
   "As built": "Izvedeno",
   "3D design": "3D projekat",
+  // /v2 hero: the build card
+  "Build sequence": "Redosled izvođenja",
+  Drawn: "Nacrtano",
+  "Pencil, 1:20": "Olovka, 1:20",
+  Floor: "Pod",
+  Joinery: "Stolarija",
+  "From our workshop": "Iz naše radionice",
+  Stone: "Kamen",
+  "Calacatta slab": "Mermer kalakata",
+  "Lights on": "Rasveta",
 
   // Statement
   "The studio": "Studio",

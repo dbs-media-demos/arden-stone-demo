@@ -3,10 +3,11 @@ import { PageShell } from "@/components/layout/PageShell";
 import { AreaMap } from "@/components/sections/AreaMap";
 import { BeforeAfter } from "@/components/sections/BeforeAfter";
 import { Estimator } from "@/components/sections/Estimator";
-import { HeroSketch, type HeroSlide } from "@/components/sections/HeroSketch";
+import { HeroSketch, type HeroMode, type HeroSlide } from "@/components/sections/HeroSketch";
 import { Journey } from "@/components/sections/Journey";
 import { MaterialMarquee } from "@/components/sections/MaterialMarquee";
 import { MaterialsBoard } from "@/components/fx/samples/MaterialsBoard";
+import { SampleBoard2D } from "@/components/fx/samples/SampleBoard2D";
 import { ProjectReel } from "@/components/sections/ProjectReel";
 import { ReviewsRow } from "@/components/sections/Reviews";
 import { ServiceStack } from "@/components/sections/ServiceStack";
@@ -54,8 +55,12 @@ export const homeFaqs = FAQS.slice(0, 5);
  * replace Arden & Stone's, and Dallas places, prices and credentials step aside. Serbian previews
  * are translated (i18n/sr; the first screen and the gallery heading already in the server's HTML)
  * and skip the dollar cost estimator.
+ *
+ * `hero="2d"` is /v2 (and /for/<token>/v2): the same page with no 3D and no three.js anywhere. The hero
+ * builds the kitchen over its drawing in canvas 2D, and the materials board is its still under a
+ * CSS light. Everything else is this one tree, so a change here lands in both versions.
  */
-export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; children?: ReactNode }) {
+export function HomeContent({ biz = defaultBiz, hero = "3d", children }: { biz?: Biz; hero?: HeroMode; children?: ReactNode }) {
   const linen = projectBySlug("the-linen-kitchen")!;
   const catLabel = (id: string) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
   const sr = biz.lang === "sr";
@@ -88,6 +93,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       {/* ───────── Hero ───────── */}
       <HeroSketch
         slide={slide}
+        hero={hero}
         footer={
           <div className="hero-facts flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-line py-5 lg:border-0 lg:py-6">
             <span className="contents phone:hidden">
@@ -348,7 +354,11 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
           <MaterialMarquee items={MATERIALS.map((m) => ({ pic: pic(m.key, m.name), name: m.name }))} />
         </div>
         <div className="shell hidden lg:block">
-          <MaterialsBoard names={MATERIALS.map((m) => m.name)} hint={t("Move over the board: the light follows you")} />
+          {hero === "3d" ? (
+            <MaterialsBoard names={MATERIALS.map((m) => m.name)} hint={t("Move over the board: the light follows you")} />
+          ) : (
+            <SampleBoard2D names={MATERIALS.map((m) => m.name)} hint={t("Move over the board: the light follows you")} />
+          )}
         </div>
       </section>
 

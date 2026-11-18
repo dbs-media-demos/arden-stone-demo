@@ -443,6 +443,135 @@
       visibility: hidden;
     }
   }
+  /* /v2's hero (desktop, no WebGL): the drawing is revealed by the drafting line across the column, the
+     kitchen is built over it on a canvas (HeroBuild), then the photo takes over. The card ticks off
+     the same sequence; keep its times (HeroSketch BUILD_STEPS) in step with HeroBuild's T. */
+  @media (min-width: 1024px) {
+    .hero-2d .hero-built {
+      transform: none;
+      container-type: size;
+    }
+    /* The whole photo, covering the column (top at the photo's 62% position); the scroll scales it up to the frame */
+    .build-box {
+      --cw: calc(56cqw - var(--gutter));
+      --ch: calc(100cqh - var(--header-h) - 6.25rem);
+      --bw: max(var(--cw), calc(var(--ch) / 1.5));
+      left: calc(44cqw + (var(--cw) - var(--bw)) * 0.5);
+      top: calc(var(--header-h) + 0.75rem + (var(--ch) - var(--bw) * 1.5) * 0.62);
+      width: var(--bw);
+      height: calc(var(--bw) * 1.5);
+    }
+    .hero-2d .build-draw {
+      animation: build-draw 2.6s var(--ease-drawn) 0.3s both;
+    }
+    .hero-2d .hero-built .hero-develop {
+      animation: build-photo 0.9s ease 5.8s both;
+    }
+  }
+  @keyframes build-draw {
+    0% {
+      clip-path: inset(0 0 0 52%);
+    }
+    85% {
+      clip-path: inset(0 0 0 0);
+    }
+    100% {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  @keyframes build-photo {
+    from {
+      opacity: 0;
+    }
+  }
+  .build-line {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    animation: build-line 2.6s var(--ease-drawn) 0.3s both;
+  }
+  .build-line::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    background: var(--color-bronze);
+    box-shadow: 0 0 0 1px rgb(196 151 100 / 0.25);
+  }
+  @keyframes build-line {
+    0% {
+      transform: translateX(52%);
+      opacity: 1;
+    }
+    85% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 0;
+    }
+  }
+  .build-card {
+    width: 17.5rem;
+    padding: 0.95rem 1.1rem 0.6rem;
+    border-radius: 2px;
+    background: color-mix(in oklab, var(--ivory) 92%, transparent);
+    backdrop-filter: blur(8px);
+    color: var(--ink);
+    box-shadow:
+      0 1px 2px rgb(29 25 22 / 0.1),
+      0 10px 24px -10px rgb(29 25 22 / 0.28),
+      0 30px 60px -30px rgb(29 25 22 / 0.35);
+  }
+  .build-card li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.75rem 1fr auto;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.5rem 0 0.55rem;
+    border-top: 1px solid rgb(29 25 22 / 0.1);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    animation: build-row 0.35s ease var(--s) both;
+  }
+  .build-card li::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: var(--bronze);
+    transform-origin: 0 50%;
+    animation: build-bar var(--d) var(--ease-drawn) var(--s) both;
+  }
+  .build-card .build-step {
+    font-weight: 500;
+  }
+  .build-card .build-note {
+    color: var(--muted, #6b6259);
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+  }
+  @keyframes build-row {
+    from {
+      opacity: 0.32;
+    }
+  }
+  @keyframes build-bar {
+    from {
+      transform: scaleX(0);
+    }
+  }
   /* Materials (desktop): each sample's name, laid on the linen under it (MaterialsBoard) */
   .sample-board {
     box-shadow:
@@ -475,6 +604,45 @@
   }
   .sample-label[data-active] .text-bronze-text {
     color: var(--bronze-light);
+  }
+  /* /v2's sample board: the 3D board's still under a low warm light. The scroll walks the light across
+     the board (CSS scroll-driven); with the pointer on the board, the light follows the pointer. */
+  .board-light {
+    --lx: var(--sx, 22%);
+    --ly: 18%;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 30% 75% at var(--lx) var(--ly), rgb(255 238 206 / 0.9) 0%, rgb(255 224 178 / 0.32) 38%, transparent 70%),
+      radial-gradient(ellipse 90% 120% at var(--lx) var(--ly), transparent 30%, rgb(29 25 22 / 0.34) 100%);
+    mix-blend-mode: soft-light;
+  }
+  .sample-board-2d[data-lit] .board-light {
+    --lx: var(--bx, 50%);
+    --ly: var(--by, 30%);
+  }
+  @property --sx {
+    syntax: "<percentage>";
+    inherits: true;
+    initial-value: 22%;
+  }
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .board-light {
+        animation: board-sweep linear both;
+        animation-timeline: view();
+        animation-range: entry 20% exit 20%;
+      }
+    }
+  }
+  @keyframes board-sweep {
+    from {
+      --sx: 8%;
+    }
+    to {
+      --sx: 92%;
+    }
   }
   /* Phones: a still of the same model on the hero photo, as a small plate */
   .room-plate {
