@@ -50,13 +50,13 @@ export function MaterialsBoard({ names, hint }: { names: string[]; hint: string 
         sc = await warmUp(async () => {
           const [{ createSamples }] = await Promise.all([import("./scene"), warmShaders()]);
           if (cancelled) return;
-          const s = await createSamples(el, { gl: GL_ATTRS, pause: breathe, onFrame: watchFrames("board", () => demote("board")) });
+          const s = await createSamples(el, { gl: GL_ATTRS, pause: breathe, onFrame: watchFrames("board", () => demote("slow", "board")) });
           s.setVisible(false); // drawn once out of sight; frames only once it's on screen
           await new Promise<void>((r) => s.onReady(r));
           return s;
         });
       } catch {
-        if (!cancelled) demote("webgl"); // no WebGL, or not a proper GPU: the still stays
+        if (!cancelled) demote("gpu", "webgl"); // no WebGL, or not a proper GPU: the still stays
         return;
       }
       if (!sc) return;

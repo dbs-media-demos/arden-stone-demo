@@ -9,9 +9,12 @@
  *   every scene starts with (gpu.worker.ts). Either missing keeps the stills.
  * - Scenes warm up one after another (`warmUp`), in small steps that hand the main thread back
  *   (`breathe`), so the page keeps scrolling and animating while they load and compile.
- * - The first 2 seconds of each scene's frames are watched (`watchFrames`): under about 45 fps, or
- *   any frame over 100 ms, and the scene fades back to its still. That's remembered for the visit
- *   (sessionStorage), and every other scene drops back to its still too (`demote`, `onDemote`).
+ * - The first 2 seconds of each scene's frames are watched (`watchFrames`): under about 45 fps, a
+ *   3rd frame over 100 ms or one over 400 ms, and the scene fades back to its still, and every other
+ *   scene on the page drops back to its still too (`demote`, `onDemote`). No real graphics chip is
+ *   remembered for the visit at once (sessionStorage); running slow (frames or the processor) is
+ *   counted once per page load and keeps the stills for the visit only after 2 slow loads. On 18 Nov
+ *   one slow start on a refresh (the GPU's first draw) kept a fast PC on the stills for the whole tab.
  */
 
 export const DESK_3D = "(min-width: 1024px) and (hover: hover) and (pointer: fine)";
@@ -21,22 +24,31 @@ export const MAX_DPR = 1.5;
 export const GL_ATTRS: WebGLContextAttributes = { powerPreference: "high-performance", failIfMajorPerformanceCaveat: true };
 
 const KEY = "as-3d";
+const SLOW_KEY = "as-3d-slow";
+const SLOW_LIMIT = 2;
 const MIN_FPS = 45;
 const WATCH_MS = 2000;
 const MAX_FRAME_MS = 100;
+/** A hitch or two over MAX_FRAME_MS (a font, an image decode) isn't a slow computer: the 3rd one is, or one over 4x it. */
+const MAX_HITCHES = 3;
+/** The first frames after a scene appears pay one-off costs (the GPU's first real draw took 371 ms on a refresh, 18 Nov). */
+const GRACE_FRAMES = 5;
+
+// This page load ran slow: every scene on it stays (or goes back to) its still, counted once per load
+let slowHere = false;
 
 type Conn = { saveData?: boolean };
 
-const stored = () => {
+/** This page stays on the stills: no real graphics chip this visit, a slow scene or processor on this page load, or 2 slow loads. */
+export const isDemoted = () => {
+  if (slowHere) return true;
   try {
-    return sessionStorage.getItem(KEY);
+    // only "gpu" counts under the old key: a tab's old "still" (one slow start) doesn't hold any more
+    return sessionStorage.getItem(KEY) === "gpu" || Number(sessionStorage.getItem(SLOW_KEY) || 0) >= SLOW_LIMIT;
   } catch {
-    return null;
+    return false;
   }
 };
-
-/** This visit stays on the stills (a scene was too slow, or the machine was checked and found weak). */
-export const isDemoted = () => stored() === "still";
 
 /** Desktop with a mouse, motion allowed, no Save-Data, and not already sent back to the stills. */
 export function canRun3D() {
@@ -48,12 +60,19 @@ export function canRun3D() {
 
 const listeners = new Set<() => void>();
 
-/** Back to the stills for the rest of the visit, every scene at once. */
-export function demote(why: string) {
-  if (isDemoted()) return;
+/**
+ * Back to the stills, every scene at once. `"gpu"` (no real graphics chip, no WebGL): for the rest
+ * of the visit. `"slow"`: for this page load, and for the visit once 2 loads ran slow.
+ */
+export function demote(kind: "gpu" | "slow", why: string) {
+  if (slowHere) return;
+  const was = isDemoted();
   try {
-    sessionStorage.setItem(KEY, "still");
+    if (kind === "gpu") sessionStorage.setItem(KEY, "gpu");
+    else sessionStorage.setItem(SLOW_KEY, String(Number(sessionStorage.getItem(SLOW_KEY) || 0) + 1));
   } catch {}
+  slowHere = true; // either way, this page load is on the stills now
+  if (was) return;
   performance.mark(`3d:still:${why}`);
   listeners.forEach((f) => f());
 }
@@ -154,12 +173,15 @@ export function machineOk() {
   return (machine ??= (async () => {
     const ms = cpuMs();
     performance.mark(`3d:cpu:${ms.toFixed(1)}ms`);
-    let ok = ms < CPU_LIMIT_MS;
+    const ok = ms < CPU_LIMIT_MS;
     if (ok) {
       const gpu = await startScout().gpu;
-      ok = gpu === null ? gpuOk() : gpu !== false && !SOFTWARE.test(gpu);
+      if (!(gpu === null ? gpuOk() : gpu !== false && !SOFTWARE.test(gpu))) {
+        demote("gpu", "machine-gpu");
+        return false;
+      }
     }
-    if (!ok) demote("machine");
+    if (!ok) demote("slow", "machine-cpu");
     return ok;
   })());
 }
@@ -187,7 +209,8 @@ export const warmedUp = () => queue.then(() => {});
  * scene is warming up). Returns the function the scene's loop calls with each frame's length.
  */
 export function watchFrames(name: string, onSlow: () => void) {
-  let skip = 3; // the first frames after the fade-in settle the GPU
+  let skip = GRACE_FRAMES; // the first frames after the fade-in settle the GPU
+  let hitches = 0;
   let sum = 0;
   let n = 0;
   let done = false;
@@ -199,7 +222,7 @@ export function watchFrames(name: string, onSlow: () => void) {
   return (dt: number) => {
     if (done || busy) return;
     if (skip > 0) return void skip--;
-    if (dt > MAX_FRAME_MS) return fail(`frame ${Math.round(dt)}ms`);
+    if (dt > MAX_FRAME_MS && (++hitches >= MAX_HITCHES || dt > MAX_FRAME_MS * 4)) return fail(`frame ${Math.round(dt)}ms (hitch ${hitches})`);
     sum += dt;
     n++;
     if (sum < WATCH_MS) return;

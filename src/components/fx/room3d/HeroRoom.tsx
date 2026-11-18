@@ -64,12 +64,12 @@ export function HeroRoom({ className }: { className?: string }) {
         sc = await warmUp(async () => {
           const [{ createRoom }] = await Promise.all([import("./scene"), warmShaders()]);
           if (cancelled) return;
-          const s = await createRoom(el, { gl: GL_ATTRS, pause: breathe, onFrame: watchFrames("hero", () => demote("hero")) });
+          const s = await createRoom(el, { gl: GL_ATTRS, pause: breathe, onFrame: watchFrames("hero", () => demote("slow", "hero")) });
           await new Promise<void>((r) => s.onReady(r));
           return s;
         });
       } catch {
-        if (!cancelled) demote("webgl"); // no WebGL, or not a proper GPU
+        if (!cancelled) demote("gpu", "webgl"); // no WebGL, or not a proper GPU
         return;
       }
       if (!sc) return;

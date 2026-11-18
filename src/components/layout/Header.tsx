@@ -29,7 +29,6 @@ export function Header() {
   const [solid, setSolid] = useState(false);
   const [hover, setHover] = useState<string>("/work");
   const [settled, setSettled] = useState(false);
-  const lastY = useRef(0);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   // Phones keep the closed menu out of the first layout (.menu-waiting); laid out at idle, so its first opening still animates.
@@ -41,11 +40,30 @@ export function Header() {
 
   // Hide on scroll down, reveal on scroll up; gain a backdrop once away from the top.
   useEffect(() => {
+    // Hysteresis: it only flips once the page has moved 12 px one way since the last flip (or since
+    // the furthest point in the current direction), so Lenis's pixel-sized steps and tiny
+    // back-and-forth deltas as a scroll eases out can't make it blink.
+    let anchor = window.scrollY;
+    let isHidden = false;
+    const set = (h: boolean) => {
+      isHidden = h;
+      setHidden(h);
+    };
     const onScroll = () => {
       const y = window.scrollY;
       setSolid(y > 24);
-      setHidden(y > 160 && y > lastY.current);
-      lastY.current = y;
+      const dy = y - anchor;
+      if (y <= 160) {
+        set(false);
+        anchor = y;
+      } else if (isHidden ? dy > 0 : dy < 0) anchor = y; // still going the same way: follow it to the turning point
+      else if (dy > 12) {
+        set(true);
+        anchor = y;
+      } else if (dy < -12) {
+        set(false);
+        anchor = y;
+      }
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
